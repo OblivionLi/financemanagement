@@ -40,4 +40,4 @@ jobs:
           name: test-results
           path: build/reports/tests/test
       - name: Build Docker image
-        run: docker build -t backend .
+        run: docker build -t backend -f Dockerfile-backend .
