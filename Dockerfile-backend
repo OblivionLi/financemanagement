@@ -15,6 +15,9 @@ COPY build.gradle settings.gradle ./
 # Copy the source code
 COPY src src
 
+# Copy the .env file
+COPY .env .env
+
 # Build the application using Gradle
 RUN ./gradlew --no-daemon build
 
