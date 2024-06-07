@@ -39,5 +39,29 @@ jobs:
         with:
           name: test-results
           path: build/reports/tests/test
+      - name: Set environment variables
+        run: |
+          echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" >> $GITHUB_ENV
+          echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> $GITHUB_ENV
+          echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> $GITHUB_ENV
+          echo "SECURITY_JWT_TOKEN_SECRET_KEY=${{ secrets.SECURITY_JWT_TOKEN_SECRET_KEY }}" >> $GITHUB_ENV
+          echo "SPRING_MAIL_HOST=${{ secrets.SPRING_MAIL_HOST }}" >> $GITHUB_ENV
+          echo "SPRING_MAIL_PORT=${{ secrets.SPRING_MAIL_PORT }}" >> $GITHUB_ENV
+          echo "SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}" >> $GITHUB_ENV
+          echo "SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}" >> $GITHUB_ENV
+          echo "SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH }}" >> $GITHUB_ENV
+          echo "SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE }}" >> $GITHUB_ENV
+          echo "SPRING_MAIL_PROPERTIES_MAIL_DEBUG=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_DEBUG }}" >> $GITHUB_ENV
       - name: Build Docker image
-        run: docker build -t backend -f Dockerfile-backend .
+        run: docker build -t backend --build-arg SPRING_DATASOURCE_URL=${{ env.SPRING_DATASOURCE_URL }} \
+          --build-arg SPRING_DATASOURCE_USERNAME=${{ env.SPRING_DATASOURCE_USERNAME }} \
+          --build-arg SPRING_DATASOURCE_PASSWORD=${{ env.SPRING_DATASOURCE_PASSWORD }} \
+          --build-arg SECURITY_JWT_TOKEN_SECRET_KEY=${{ env.SECURITY_JWT_TOKEN_SECRET_KEY }} \
+          --build-arg SPRING_MAIL_HOST=${{ env.SPRING_MAIL_HOST }} \
+          --build-arg SPRING_MAIL_PORT=${{ env.SPRING_MAIL_PORT }} \
+          --build-arg SPRING_MAIL_USERNAME=${{ env.SPRING_MAIL_USERNAME }} \
+          --build-arg SPRING_MAIL_PASSWORD=${{ env.SPRING_MAIL_PASSWORD }} \
+          --build-arg SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=${{ env.SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH }} \
+          --build-arg SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=${{ env.SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE }} \
+          --build-arg SPRING_MAIL_PROPERTIES_MAIL_DEBUG=${{ env.SPRING_MAIL_PROPERTIES_MAIL_DEBUG }} \
+          -f Dockerfile-backend .
