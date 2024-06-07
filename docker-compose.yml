@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql:latest
+    restart: always
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"  # Changed port to the default for simplicity
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_DATABASE: ${SPRING_DATASOURCE_URL}
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+#    environment:
+#      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+#      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+#      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+#      SECURITY_JWT_TOKEN_SECRET_KEY: ${SECURITY_JWT_TOKEN_SECRET_KEY}
+#      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
+#      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT}
+#      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+#      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+#      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}
+#      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE}
+#      SPRING_MAIL_PROPERTIES_MAIL_DEBUG: ${SPRING_MAIL_PROPERTIES_MAIL_DEBUG}
+    command: ["./wait-for-it.sh", "database:3306", "--", "java", "-jar", "app.jar"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - backend-data:/app/data
+
+#  frontend:
+#    build:
+#      context: ./frontend-react
+#      dockerfile: Dockerfile-backend-backend-frontend
+#    ports:
+#      - "3000:3000"
+#    depends_on:
+#      - backend
+
+volumes:
+  mysql-data:
+  backend-data:
