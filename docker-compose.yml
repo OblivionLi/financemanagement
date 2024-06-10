@@ -1,5 +1,17 @@
 version: '3.8'
 
+# IMPORTANT FOR SECURITY !!! while I develop my app, these values are hardcoded for simplicity’s sake,
+#               if you pull this repo and want to use the app in a secure way, do the following:
+# 1. create .txt files for docker secrets (name the files like mysql_root_password.txt etc.)
+# 2. run the command `docker swarm init`
+# 3. create the docker secret by calling commands like `docker secret create mysql_root_password mysql_root_password.txt`
+# 4. add above the `environment:` the following:
+#     secrets:
+#       - mysql_root_password
+#       - etc.
+# 5. replace the below env as MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+# 6. then deploy `docker stack deploy -c docker-compose.yml my_stack`
+
 services:
   database:
     image: mysql:latest
@@ -7,10 +19,10 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     ports:
-      - "3306:3306"  # Changed port to the default for simplicity
+      - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      MYSQL_DATABASE: ${SPRING_DATASOURCE_URL}
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: financemanagement
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -18,26 +30,15 @@ services:
       retries: 3
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile-backend
+    image: dockerfile-backend
     ports:
       - "8080:8080"
     depends_on:
-      database:
-        condition: service_healthy
+      - database
     environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-#      SECURITY_JWT_TOKEN_SECRET_KEY: ${SECURITY_JWT_TOKEN_SECRET_KEY}
-#      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
-#      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT}
-#      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
-#      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
-#      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}
-#      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE}
-#      SPRING_MAIL_PROPERTIES_MAIL_DEBUG: ${SPRING_MAIL_PROPERTIES_MAIL_DEBUG}
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/financemanagement
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
     command: ["sh", "-c", "./wait-for-it.sh database:3306 -- java -jar app.jar"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
@@ -46,16 +47,6 @@ services:
       retries: 3
     volumes:
       - backend-data:/app/data
-
-#  frontend:
-#    build:
-#      context: ./frontend-react
-#      dockerfile: Dockerfile-backend-backend-frontend
-#    ports:
-#      - "3000:3000"
-#    depends_on:
-#      - backend
-
 volumes:
   mysql-data:
   backend-data:
