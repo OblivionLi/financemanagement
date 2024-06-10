@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.balaur.financemanagement.model.expense.Expense;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -37,6 +38,9 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     private Set<UserGroup> userGroups = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Expense> expenses = new HashSet<>();
 
     public void addUserGroups(UserGroup userGroup) {
         userGroups.add(userGroup);

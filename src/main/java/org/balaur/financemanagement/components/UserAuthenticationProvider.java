@@ -1,4 +1,4 @@
-package org.balaur.financemanagement.config;
+package org.balaur.financemanagement.components;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;

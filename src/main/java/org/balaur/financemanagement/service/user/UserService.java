@@ -3,7 +3,7 @@ package org.balaur.financemanagement.service.user;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.balaur.financemanagement.config.UserAuthenticationProvider;
+import org.balaur.financemanagement.components.UserAuthenticationProvider;
 import org.balaur.financemanagement.exception.user.PasswordDidNotMatchException;
 import org.balaur.financemanagement.exception.user.UserFoundException;
 import org.balaur.financemanagement.model.user.*;
