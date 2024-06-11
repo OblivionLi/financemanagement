@@ -25,10 +25,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.CharBuffer;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -53,6 +55,7 @@ public class UserService implements UserDetailsService {
         return new UserDetailsImpl(user);
     }
 
+    @Transactional
     public ResponseEntity<AuthResponse> register(@Valid UserRegisterRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             log.warn("[UserService] {} | Password and confirm password did not match.", new Date());
@@ -72,15 +75,18 @@ public class UserService implements UserDetailsService {
         newUser.setEmail(request.getEmail());
         newUser.setHashedPassword(encryptedPassword);
         newUser.setLocked(false);
-
-        try {
-            newUser.addUserGroups(getUserGroup());
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());
+
+        UserGroup userGroup = userGroupRepository.findByCode("ROLE_USER")
+                .orElseGet(() -> {
+                    UserGroup newGroup = new UserGroup();
+                    newGroup.setCode("ROLE_USER");
+                    return userGroupRepository.save(newGroup);
+                });
+
+        newUser.addUserGroups(userGroup);
+
 
         try {
             newUser = userRepository.save(newUser);
@@ -110,19 +116,20 @@ public class UserService implements UserDetailsService {
             userRoleValue = "ROLE_" + UserRoles.USER;
         }
 
-        UserGroup userGroup = userGroupRepository.findByCode(userRoleValue);
-        if (userGroup == null) {
+        Optional<UserGroup> userGroup = userGroupRepository.findByCode(userRoleValue);
+        if (userGroup.isEmpty()) {
             UserGroup newUserGroup = new UserGroup();
             newUserGroup.setCode(userRoleValue);
-            userGroup = userGroupRepository.save(newUserGroup);
+            userGroup = Optional.of(userGroupRepository.save(newUserGroup));
 
             System.out.println("UPDATED");
             log.info("[UserService] {} | Created new user group: {}", new Date(), newUserGroup);
         }
 
-        return userGroup;
+        return userGroup.orElse(null);
     }
 
+    @Transactional
     public ResponseEntity<AuthResponse> login(@Valid UserLoginRequest request) {
         User foundUser = userRepository.findByEmail(request.getEmail());
         if (foundUser == null) {

@@ -11,4 +11,8 @@ import java.util.List;
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     @Query("SELECT e FROM Expense e WHERE e.user = :user")
     List<Expense> findByUser(@Param("user") User user);
+
+
+    @Query("SELECT e FROM Expense  e WHERE e.recurring = true")
+    List<Expense> findRecurringExpenses();
 }

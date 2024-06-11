@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +18,7 @@ public class ExpenseCronJobs {
 
     @Transactional
     public void processRecurringExpenses() {
-        List<Expense> recurringExpenses = getRecurringExpenses();
+        List<Expense> recurringExpenses = expenseRepository.findRecurringExpenses();
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -70,11 +69,5 @@ public class ExpenseCronJobs {
             case "YEARLY" -> date.plusYears(1);
             default -> null;
         };
-    }
-
-    private List<Expense> getRecurringExpenses() {
-        return expenseRepository.findAll().stream()
-                .filter(Expense::isRecurring)
-                .collect(Collectors.toList());
     }
 }

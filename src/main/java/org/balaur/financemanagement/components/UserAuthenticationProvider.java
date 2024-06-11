@@ -48,13 +48,13 @@ public class UserAuthenticationProvider {
         }
     }
 
-    private Authentication getAlgorithm(String secretKey) {
+    private Authentication getAlgorithm(String token) {
         Algorithm algorithm = Algorithm.HMAC256(secretKey);
 
         JWTVerifier verifier = JWT.require(algorithm)
                 .build();
 
-        DecodedJWT decodedJWT = verifier.verify(secretKey);
+        DecodedJWT decodedJWT = verifier.verify(token);
 
         AuthResponse userDetailsResponse = AuthResponse.builder()
                 .email(decodedJWT.getSubject())
