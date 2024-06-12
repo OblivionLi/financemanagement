@@ -32,7 +32,11 @@ public class Expense {
 
     private String description;
     private BigDecimal amount;
-    private String category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subcategory_id", nullable = false)
+    private ExpenseSubCategory subCategory;
+
     private LocalDateTime date;
     private boolean recurring;
     private String recurrencePeriod;

@@ -26,14 +26,17 @@ public class ExpenseCronJobs {
             LocalDateTime nextOccurrence = calculateNextOccurrence(expense.getDate(), expense.getRecurrencePeriod());
 
             if (nextOccurrence == null) {
+                log.info("Skipping expense with ID {}: Invalid recurrence period", expense.getId());
                 continue;
             }
 
             if (!nextOccurrence.isBefore(now)) {
+                log.info("Skipping expense with ID {}: Next occurrence is not before now", expense.getId());
                 continue;
             }
 
             if (nextOccurrence.isBefore(expense.getDate())) {
+                log.info("Skipping expense with ID {}: Next occurrence is before the current date", expense.getId());
                 continue;
             }
 
@@ -44,6 +47,7 @@ public class ExpenseCronJobs {
 
                 expense.setDate(nextOccurrence);
                 expenseRepository.save(expense);
+                log.info("Processed recurring expense with ID {}: Created new expense with ID {}", expense.getId(), newExpense.getId());
             } catch (Exception e) {
                 log.error("[ExpenseCronJobs] | Error processing recurring expense for user: {}. Error: {}", expense.getUser().getUsername(), e.getMessage());
             }
@@ -55,7 +59,7 @@ public class ExpenseCronJobs {
         newExpense.setUser(expense.getUser());
         newExpense.setDescription(expense.getDescription());
         newExpense.setAmount(expense.getAmount());
-        newExpense.setCategory(expense.getCategory());
+        newExpense.setSubCategory(expense.getSubCategory());
         newExpense.setDate(nextOccurrence);
         newExpense.setRecurring(expense.isRecurring());
         newExpense.setRecurrencePeriod(expense.getRecurrencePeriod());
@@ -69,5 +73,13 @@ public class ExpenseCronJobs {
             case "YEARLY" -> date.plusYears(1);
             default -> null;
         };
+
+        // used for testing
+//        return switch (recurrencePeriod) {
+//            case "WEEKLY" -> date.plusMinutes(1); // For testing, using minutes instead of weeks
+//            case "MONTHLY" -> date.plusMinutes(1); // For testing, using minutes instead of months
+//            case "YEARLY" -> date.plusMinutes(1); // For testing, using minutes instead of years
+//            default -> null;
+//        };
     }
 }

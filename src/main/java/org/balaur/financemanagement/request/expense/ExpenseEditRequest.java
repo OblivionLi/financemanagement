@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class ExpenseEditRequest {
     private String description;
     private BigDecimal amount;
-    private String category;
+    private Long subCategoryId;
     private LocalDateTime date;
     private Boolean recurring;
     private String recurrencePeriod;

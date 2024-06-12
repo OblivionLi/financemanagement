@@ -1,4 +1,4 @@
-package org.balaur.financemanagement.utils;
+package org.balaur.financemanagement.utils.user;
 
 public enum UserRoles {
     ANONYMOUS,

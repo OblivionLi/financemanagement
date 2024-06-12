@@ -4,17 +4,17 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.balaur.financemanagement.model.expense.Expense;
+import org.balaur.financemanagement.model.expense.ExpenseSubCategory;
 import org.balaur.financemanagement.model.user.User;
 import org.balaur.financemanagement.repository.ExpenseRepository;
-import org.balaur.financemanagement.repository.UserRepository;
+import org.balaur.financemanagement.repository.ExpenseSubCategoryRepository;
 import org.balaur.financemanagement.request.expense.ExpenseEditRequest;
 import org.balaur.financemanagement.request.expense.ExpenseRequest;
-import org.balaur.financemanagement.response.auth.AuthResponse;
 import org.balaur.financemanagement.response.expense.ExpenseResponse;
+import org.balaur.financemanagement.service.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,12 +26,25 @@ import java.util.List;
 @Slf4j
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
+    private final ExpenseSubCategoryRepository subCategoryRepository;
 
     public ResponseEntity<ExpenseResponse> addExpense(Authentication authentication, @Valid ExpenseRequest expenseRequest) {
-        User user = getUserFromAuthentication(authentication);
+        User user = userService.getUserFromAuthentication(authentication);
 
-        Expense expense = getExpense(expenseRequest, user);
+        ExpenseSubCategory subCategory = subCategoryRepository.findById(expenseRequest.getSubCategoryId()).orElse(null);
+        if (subCategory == null || !subCategory.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+        Expense expense = new Expense();
+        expense.setUser(user);
+        expense.setDescription(expenseRequest.getDescription());
+        expense.setAmount(expenseRequest.getAmount());
+        expense.setSubCategory(subCategory);
+        expense.setDate(expenseRequest.getDate());
+        expense.setRecurring(expenseRequest.isRecurring());
+        expense.setRecurrencePeriod(expenseRequest.getRecurrencePeriod());
 
         try {
             expense = expenseRepository.save(expense);
@@ -46,26 +59,8 @@ public class ExpenseService {
         return ResponseEntity.status(HttpStatus.CREATED).body(expenseResponse);
     }
 
-    private static Expense getExpense(ExpenseRequest expenseRequest, User user) {
-        Expense expense = new Expense();
-
-        expense.setUser(user);
-        expense.setAmount(expenseRequest.getAmount());
-        expense.setDescription(expenseRequest.getDescription());
-        expense.setCategory(expenseRequest.getCategory());
-        expense.setDate(expenseRequest.getDate());
-
-        if (expenseRequest.isRecurring()) {
-            expense.setRecurring(true);
-            expense.setRecurrencePeriod(expenseRequest.getRecurrencePeriod());
-        } else {
-            expense.setRecurring(false);
-        }
-        return expense;
-    }
-
     public ResponseEntity<String> deleteExpense(Authentication authentication, Long id) {
-        User user = getUserFromAuthentication(authentication);
+        User user = userService.getUserFromAuthentication(authentication);
 
         try {
             Expense expense = expenseRepository.findById(id)
@@ -87,19 +82,8 @@ public class ExpenseService {
         }
     }
 
-    private User getUserFromAuthentication(Authentication authentication) {
-        String email = ((AuthResponse) authentication.getPrincipal()).getEmail();
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            log.warn("[ExpenseService] {} | User: {} not found.", new Date(), authentication.getName());
-            throw new UsernameNotFoundException("User: " + authentication.getName() + " not found.");
-        }
-        return user;
-    }
-
     public ResponseEntity<ExpenseResponse> editExpense(Authentication authentication, Long id, ExpenseEditRequest request) {
-        User user = getUserFromAuthentication(authentication);
+        User user = userService.getUserFromAuthentication(authentication);
 
         try {
             Expense expense = expenseRepository.findById(id)
@@ -132,8 +116,11 @@ public class ExpenseService {
         if (request.getAmount() != null) {
             expense.setAmount(request.getAmount());
         }
-        if (request.getCategory() != null) {
-            expense.setCategory(request.getCategory());
+        if (request.getSubCategoryId() != null) {
+            ExpenseSubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId()).orElse(null);
+            if (subCategory != null) {
+                expense.setSubCategory(subCategory);
+            }
         }
         if (request.getDate() != null) {
             expense.setDate(request.getDate());
@@ -150,7 +137,8 @@ public class ExpenseService {
         return ExpenseResponse.builder()
                 .description(expense.getDescription())
                 .amount(expense.getAmount())
-                .category(expense.getCategory())
+                .category(expense.getSubCategory().getCategory().getDisplayName())
+                .subCategory(expense.getSubCategory().getName())
                 .date(expense.getDate())
                 .recurring(expense.isRecurring())
                 .recurrencePeriod(expense.getRecurrencePeriod())

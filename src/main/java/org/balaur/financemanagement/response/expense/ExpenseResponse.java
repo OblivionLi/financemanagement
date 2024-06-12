@@ -15,6 +15,7 @@ public class ExpenseResponse {
     private String description;
     private BigDecimal amount;
     private String category;
+    private String subCategory;
     private LocalDateTime date;
     private boolean recurring;
     private String recurrencePeriod;

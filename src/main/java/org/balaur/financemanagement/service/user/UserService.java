@@ -15,11 +15,12 @@ import org.balaur.financemanagement.request.auth.UserLoginRequest;
 import org.balaur.financemanagement.request.auth.UserRegisterRequest;
 import org.balaur.financemanagement.request.auth.UserResetPasswordRequest;
 import org.balaur.financemanagement.response.auth.AuthResponse;
-import org.balaur.financemanagement.utils.UserRoles;
+import org.balaur.financemanagement.utils.user.UserRoles;
 import org.balaur.financemanagement.utils.user.UserServiceUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -221,5 +222,16 @@ public class UserService implements UserDetailsService {
         userDetailsResponse.setToken(userAuthenticationProvider.createToken(userDetailsResponse));
 
         return ResponseEntity.status(HttpStatus.OK).body(userDetailsResponse);
+    }
+
+    public User getUserFromAuthentication(Authentication authentication) {
+        String email = ((AuthResponse) authentication.getPrincipal()).getEmail();
+        User user = userRepository.findByEmail(email);
+
+        if (user == null) {
+            log.warn("[ExpenseService] {} | User: {} not found.", new Date(), authentication.getName());
+            throw new UsernameNotFoundException("User: " + authentication.getName() + " not found.");
+        }
+        return user;
     }
 }

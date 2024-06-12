@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 
@@ -22,7 +23,11 @@ public class UserAuthenticationProvider {
 
     public String createToken(AuthResponse userDetailsResponse) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 3600000);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(now);
+        calendar.add(Calendar.MONTH, 6); // for now allow token to be valid for 6 months
+
+        Date validity = calendar.getTime();
 
         Algorithm algorithm = Algorithm.HMAC256(secretKey);
 
@@ -49,18 +54,20 @@ public class UserAuthenticationProvider {
     }
 
     private Authentication getAlgorithm(String token) {
-        Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secretKey);
+            JWTVerifier verifier = JWT.require(algorithm).build();
+            DecodedJWT decodedJWT = verifier.verify(token);
 
-        JWTVerifier verifier = JWT.require(algorithm)
-                .build();
+            AuthResponse userDetailsResponse = AuthResponse.builder()
+                    .email(decodedJWT.getSubject())
+                    .username(decodedJWT.getClaim("username").asString())
+                    .build();
 
-        DecodedJWT decodedJWT = verifier.verify(token);
-
-        AuthResponse userDetailsResponse = AuthResponse.builder()
-                .email(decodedJWT.getSubject())
-                .username(decodedJWT.getClaim("username").asString())
-                .build();
-
-        return new UsernamePasswordAuthenticationToken(userDetailsResponse, null, Collections.emptyList());
+            return new UsernamePasswordAuthenticationToken(userDetailsResponse, null, Collections.emptyList());
+        } catch (Exception ex) {
+            System.err.println("Error in token verification: " + ex.getMessage());
+            throw new RuntimeException("Error verifying token", ex);
+        }
     }
 }
