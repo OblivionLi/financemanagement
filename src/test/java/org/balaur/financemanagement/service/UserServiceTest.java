@@ -27,6 +27,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -55,7 +56,7 @@ public class UserServiceTest {
     void UserService_Register_ReturnUserDetailsResponse() {
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.findByEmail(anyString())).thenReturn(null);
-        when(userGroupRepository.findByCode(anyString())).thenReturn(getMockUserGroup());
+        when(userGroupRepository.findByCode(anyString())).thenReturn(Optional.of(getMockUserGroup()));
         when(userRepository.save(any())).thenReturn(getMockUser());
         when(userAuthenticationProvider.createToken(any())).thenReturn("mockedToken");
 

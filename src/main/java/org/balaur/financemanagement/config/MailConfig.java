@@ -38,14 +38,6 @@ public class MailConfig {
 
     @Bean
     public JavaMailSender javaMailSender() {
-        // Logging the property values
-        logger.info("Mail Host: {}", mailHost);
-        logger.info("Mail Port: {}", mailPort);
-        logger.info("Mail Username: {}", mailUsername);
-        logger.info("Mail SMTP Auth: {}", mailSmtpAuth);
-        logger.info("Mail SMTP StartTLS Enable: {}", mailSmtpStartTlsEnable);
-        logger.info("Mail Debug: {}", mailDebug);
-
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost(mailHost);
         mailSender.setPort(mailPort);
