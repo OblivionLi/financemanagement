@@ -1,4 +1,4 @@
-package org.balaur.financemanagement.model.expense;
+package org.balaur.financemanagement.model.income;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,19 +13,20 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-    name = "expenses",
+    name = "incomes",
     indexes = {
             @Index(name = "idx_recurring", columnList = "recurring")
     }
 )
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-public class Expense {
+@NoArgsConstructor
+public class Income {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String source;
     private String description;
     private BigDecimal amount;
     private LocalDateTime date;
@@ -35,10 +36,6 @@ public class Expense {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subcategory_id", nullable = false)
-    private ExpenseSubCategory subCategory;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "currency_id", nullable = false)

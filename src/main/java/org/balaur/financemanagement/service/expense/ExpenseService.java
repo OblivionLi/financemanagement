@@ -100,6 +100,7 @@ public class ExpenseService {
             expenseRepository.save(expense);
 
             ExpenseResponse expenseResponse = buildExpenseResponse(expense);
+            expenseResponse.setUsername(user.getUsername());
 
             return ResponseEntity.ok(expenseResponse);
         } catch (IllegalArgumentException e) {
@@ -115,28 +116,38 @@ public class ExpenseService {
         if (request.getDescription() != null) {
             expense.setDescription(request.getDescription());
         }
+
         if (request.getAmount() != null) {
             expense.setAmount(request.getAmount());
         }
+
         if (request.getSubCategoryId() != null) {
             ExpenseSubCategory subCategory = subCategoryRepository.findById(request.getSubCategoryId()).orElse(null);
             if (subCategory != null) {
                 expense.setSubCategory(subCategory);
             }
         }
+
         if (request.getDate() != null) {
             expense.setDate(request.getDate());
         }
+
         if (request.getRecurring() != null) {
             expense.setRecurring(request.getRecurring());
         }
+
         if (request.getRecurrencePeriod() != null) {
             expense.setRecurrencePeriod(request.getRecurrencePeriod());
+        }
+
+        if (request.getRecurring() != null && !request.getRecurring()) {
+            expense.setRecurrencePeriod(null);
         }
     }
 
     private ExpenseResponse buildExpenseResponse(Expense expense) {
         return ExpenseResponse.builder()
+                .id(expense.getId())
                 .description(expense.getDescription())
                 .amount(expense.getAmount())
                 .category(expense.getSubCategory().getCategory().getDisplayName())

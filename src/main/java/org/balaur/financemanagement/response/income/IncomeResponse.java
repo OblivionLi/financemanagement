@@ -1,4 +1,4 @@
-package org.balaur.financemanagement.response.expense;
+package org.balaur.financemanagement.response.income;
 
 import lombok.Builder;
 import lombok.Data;
@@ -8,13 +8,12 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class ExpenseResponse {
+public class IncomeResponse {
     private Long id;
     private String username;
     private String description;
     private BigDecimal amount;
-    private String category;
-    private String subCategory;
+    private String source;
     private LocalDateTime date;
     private boolean recurring;
     private String recurrencePeriod;

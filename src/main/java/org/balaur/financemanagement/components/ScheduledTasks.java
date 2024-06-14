@@ -1,6 +1,7 @@
 package org.balaur.financemanagement.components;
 
 import lombok.RequiredArgsConstructor;
+import org.balaur.financemanagement.service.currency.CurrencyService;
 import org.balaur.financemanagement.service.expense.ExpenseCronJobs;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -9,10 +10,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ScheduledTasks {
     private final ExpenseCronJobs expenseCronJobs;
+    private final CurrencyService currencyService;
 
     @Scheduled(cron = "0 0 0 * * ?")
     public void processRecurringExpensesAndIncomes() {
         expenseCronJobs.processRecurringExpenses();
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void actualizeCurrencyCodes() {
+        currencyService.fetchAndSaveCurrencies();
     }
 
     // Use this only for testing, make sure you also edit the ExpenseCronJobs->calculateNextOccurrence() and add date.plusMinutes(1);

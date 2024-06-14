@@ -13,6 +13,6 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByUser(@Param("user") User user);
 
 
-    @Query("SELECT e FROM Expense  e WHERE e.recurring = true")
+    @Query("SELECT e FROM Expense e WHERE e.recurring = true")
     List<Expense> findRecurringExpenses();
 }

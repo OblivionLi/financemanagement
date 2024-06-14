@@ -1,4 +1,4 @@
-package org.balaur.financemanagement.request.expense;
+package org.balaur.financemanagement.request.income;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExpenseEditRequest {
+public class IncomeEditRequest {
     private String description;
+    private String source;
     private BigDecimal amount;
-    private Long subCategoryId;
     private LocalDateTime date;
     private Boolean recurring;
     private String recurrencePeriod;
