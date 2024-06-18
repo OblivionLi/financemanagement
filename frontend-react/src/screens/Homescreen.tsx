@@ -1,10 +1,13 @@
 import React from 'react';
+import MainNavbar from "../components/MainNavbar";
+import FinancesScreen from "./finances/FinancesScreen";
 
 function Homescreen() {
     return (
-        <div>
-            hello world
-        </div>
+        <>
+            <MainNavbar/>
+            <FinancesScreen/>
+        </>
     );
 }
 

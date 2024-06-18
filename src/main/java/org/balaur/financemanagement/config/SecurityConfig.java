@@ -49,6 +49,11 @@ public class SecurityConfig {
                         .requestMatchers(mvcMatcherBuilder.pattern("/api/expenses/edit/{id}")).authenticated()
                         .requestMatchers(mvcMatcherBuilder.pattern("/api/expenses/recurring")).authenticated()
 
+                        // expenses subcategories
+                        .requestMatchers(mvcMatcherBuilder.pattern("/api/expenses/subcategories")).authenticated()
+                        .requestMatchers(mvcMatcherBuilder.pattern("/api/expenses/subcategories/add")).authenticated()
+
+
 
 //                        .requestMatchers(mvcMatcherBuilder.pattern("/api/user/change-details")).authenticated()
 //                        .requestMatchers(mvcMatcherBuilder.pattern("/api/user/shipping-address")).authenticated()

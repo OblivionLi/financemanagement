@@ -18,4 +18,5 @@ public class ExpenseResponse {
     private LocalDateTime date;
     private boolean recurring;
     private String recurrencePeriod;
+    private String currencyCode;
 }

@@ -29,4 +29,7 @@ public class ExpenseRequest {
 
     @Pattern(regexp = "WEEKLY|MONTHLY|YEARLY", message = "Recurrence period must be WEEKLY, MONTHLY, or YEARLY")
     private String recurrencePeriod;
+
+    @NotNull
+    private Long currencyId;
 }

@@ -22,4 +22,7 @@ public class UserRegisterRequest {
     @NotNull(message = "Confirm password field can't be missing from request")
     @NotEmpty(message = "Confirm password field can't be empty")
     private String confirmPassword;
+    @NotNull(message = "Currency field can't be missing from request")
+    @NotEmpty(message = "Currency field can't be empty")
+    private String currency;
 }

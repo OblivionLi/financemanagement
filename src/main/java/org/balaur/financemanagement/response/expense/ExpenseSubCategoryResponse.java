@@ -8,6 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ExpenseSubCategoryResponse {
+    private Long id;
     private String categoryName;
     private String username;
     private String subCategoryName;

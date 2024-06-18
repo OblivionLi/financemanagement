@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,11 +40,37 @@ public class ExpenseSubCategoryService {
         }
 
         ExpenseSubCategoryResponse response = ExpenseSubCategoryResponse.builder()
+                .id(subCategory.getId())
                 .categoryName(subCategory.getCategory().getDisplayName())
                 .subCategoryName(subCategory.getName())
                 .username(subCategory.getUser().getUsername())
                 .build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    public ResponseEntity<List<ExpenseSubCategoryResponse>> getUserSubCategories(Authentication authentication) {
+        User user = userService.getUserFromAuthentication(authentication);
+
+        try {
+            List<ExpenseSubCategory> subCategories = subCategoryRepository.findAllByUser(user);
+            List<ExpenseSubCategoryResponse> subCategoryResponses = new ArrayList<>();
+
+            for (ExpenseSubCategory subCategory : subCategories) {
+                ExpenseSubCategoryResponse response = ExpenseSubCategoryResponse.builder()
+                        .id(subCategory.getId())
+                        .username(user.getUsername())
+                        .subCategoryName(subCategory.getName())
+                        .categoryName(subCategory.getCategory().getDisplayName())
+                        .build();
+
+                subCategoryResponses.add(response);
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(subCategoryResponses);
+        } catch (Exception e) {
+            log.error("[ExpenseService] {} | Error saving expense: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

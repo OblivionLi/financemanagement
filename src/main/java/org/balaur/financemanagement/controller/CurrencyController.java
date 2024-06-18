@@ -1,12 +1,11 @@
 package org.balaur.financemanagement.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.balaur.financemanagement.response.CurrencyResponse;
 import org.balaur.financemanagement.service.currency.CurrencyService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -20,4 +19,9 @@ public class CurrencyController {
     public ResponseEntity<List<CurrencyResponse>> getCurrencies() {
         return currencyService.getCurrencies();
     }
+
+//    @PostMapping()
+//    public ResponseEntity<String> setAccountCurrency(@Valid @RequestBody CurrencyCreateRequest currencyCreateRequest) {
+//        return currencyService.setAccountCurrency();
+//    }
 }

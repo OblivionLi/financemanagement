@@ -26,6 +26,9 @@ public class User {
     private String email;
     private boolean locked;
 
+    @Column(name = "preferred_currency")
+    private String preferredCurrency;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
