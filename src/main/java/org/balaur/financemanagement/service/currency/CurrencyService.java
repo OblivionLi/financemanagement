@@ -1,57 +1,131 @@
 package org.balaur.financemanagement.service.currency;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.balaur.financemanagement.model.currency.Currency;
-import org.balaur.financemanagement.repository.CurrencyRepository;
-import org.balaur.financemanagement.response.CurrencyResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.balaur.financemanagement.model.expense.Expense;
+import org.balaur.financemanagement.model.income.Income;
+import org.balaur.financemanagement.model.user.User;
+import org.balaur.financemanagement.repository.ExpenseRepository;
+import org.balaur.financemanagement.repository.IncomeRepository;
+import org.balaur.financemanagement.repository.UserRepository;
+import org.balaur.financemanagement.request.currency.CurrencyUpdateRequest;
+import org.balaur.financemanagement.service.RateLimitService;
+import org.balaur.financemanagement.service.user.UserService;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CurrencyService {
-    private final CurrencyRepository currencyRepository;
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final CacheManager cacheManager;
+    public static final String RATES_CACHE = "ratesCache";
+    private final IncomeRepository incomeRepository;
+    private final ExpenseRepository expenseRepository;
+    private final RateLimitService rateLimitService;
 
-    @PostConstruct
-    public void initCurrencies() {
-        fetchAndSaveCurrencies();
+    public Map<String, Double> getExchangeRates(String baseCurrency) {
+        Cache cache = cacheManager.getCache(RATES_CACHE);
+        Cache.ValueWrapper cachedRates = Objects.requireNonNull(cache).get(baseCurrency);
+
+        if (cachedRates != null) {
+            return (Map<String, Double>) cachedRates.get();
+        }
+
+        String url = "https://api.exchangerate-api.com/v4/latest/" + baseCurrency;
+        ResponseEntity<Map<String, Object>> response = new RestTemplate().getForEntity(url, (Class<Map<String, Object>>)(Class<?>)Map.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            Map<String, Double> rates = (Map<String, Double>) response.getBody().get("rates");
+            cache.put(baseCurrency, rates);
+            return rates;
+        } else {
+            throw new RuntimeException("Failed to fetch exchange rates");
+        }
     }
 
-    public void fetchAndSaveCurrencies() {
-        String url = "https://api.exchangerate-api.com/v4/latest/EUR";
+    public double getExchangeRate(String fromCurrency, String toCurrency) {
+        if (fromCurrency.equals(toCurrency)) {
+            return 1.0;
+        }
 
-        RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        Map<String, Double> rates = getExchangeRates(fromCurrency);
+        return rates.get(toCurrency);
+    }
 
-        if (response != null && response.containsKey("rates")) {
-            Map<String, Number> rates = (Map<String, Number>) response.get("rates");
-            long timeLastUpdated = ((Number) response.get("time_last_updated")).longValue();
-            LocalDateTime lastUpdatedDateTime = Instant.ofEpochSecond(timeLastUpdated).atZone(ZoneId.systemDefault()).toLocalDateTime();
 
-            for (Map.Entry<String, Number> entry : rates.entrySet()) {
-                String code = entry.getKey();
-                BigDecimal rate = BigDecimal.valueOf(entry.getValue().doubleValue());
-                String name = getCurrencyName(code);
+    @Transactional
+    public ResponseEntity<String> updateCurrency(Authentication authentication, CurrencyUpdateRequest request) {
+        User user = userService.getUserFromAuthentication(authentication);
 
-                Currency currency = currencyRepository.findByCode(code)
-                        .orElse(new Currency());
+        if (rateLimitService.isRateLimitRequest(user.getEmail())) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Rate limit exceeded");
+        }
 
-                currency.setCode(code);
-                currency.setName(name);
-                currency.setRate(rate);
-                currency.setLastTimeUpdated(lastUpdatedDateTime);
-                currencyRepository.save(currency);
-            }
+        String oldCurrencyCode = user.getPreferredCurrency();
+
+        String code = getCurrencyName(request.getCurrencyCode());
+        if (code.equals("Unknown Currency")) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        user.setPreferredCurrency(request.getCurrencyCode());
+
+        try {
+            userRepository.save(user);
+            rateLimitService.incrementRequestCount(user.getEmail());
+        } catch (Exception e) {
+            log.error("[CurrencyService] {} | Error updating user preferred currency: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        if (!request.isConvertAmounts()) {
+            return ResponseEntity.ok("Currency updated successfully");
+        }
+
+        double getNewRate = getExchangeRate(oldCurrencyCode, request.getCurrencyCode());
+
+        try {
+            updateIncomesAmounts(request.getCurrencyCode(), getNewRate);
+            updateExpensesAmounts(request.getCurrencyCode(), getNewRate);
+
+            return ResponseEntity.ok("Currency and amounts updated successfully");
+        } catch (Exception e) {
+            log.error("[CurrencyService] {} | Error updating incomes/expenses amounts: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @Transactional
+    public void updateExpensesAmounts(String currencyCode, double exchangeRate) {
+        List<Expense> expenseList = expenseRepository.findAll();
+        for (Expense expense : expenseList) {
+            BigDecimal newAmount = expense.getAmount().multiply(BigDecimal.valueOf(exchangeRate));
+            expense.setAmount(newAmount);
+            expense.setCurrency(currencyCode);
+            expenseRepository.save(expense);
+        }
+    }
+
+    @Transactional
+    public void updateIncomesAmounts(String currencyCode, double exchangeRate) {
+        List<Income> incomeList = incomeRepository.findAll();
+        for (Income income : incomeList) {
+            BigDecimal newAmount = income.getAmount().multiply(BigDecimal.valueOf(exchangeRate));
+            income.setAmount(newAmount);
+            income.setCurrency(currencyCode);
+            incomeRepository.save(income);
         }
     }
 
@@ -221,24 +295,5 @@ public class CurrencyService {
                 Map.entry("ZWL", "Zimbabwean Dollar")
         );
         return currencyNames.getOrDefault(code, "Unknown Currency");
-    }
-
-    public ResponseEntity<List<CurrencyResponse>> getCurrencies() {
-        List<Currency> currencyList = currencyRepository.findAll();
-        List<CurrencyResponse> currencyResponseList = new ArrayList<>();
-
-        for (Currency currency : currencyList) {
-            CurrencyResponse currencyResponse = CurrencyResponse.builder()
-                    .id(currency.getId())
-                    .name(currency.getName())
-                    .code(currency.getCode())
-                    .lastTimeUpdated(currency.getLastTimeUpdated())
-                    .rate(currency.getRate())
-                    .build();
-
-            currencyResponseList.add(currencyResponse);
-        }
-
-        return ResponseEntity.ok(currencyResponseList);
     }
 }

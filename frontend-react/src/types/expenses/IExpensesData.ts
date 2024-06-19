@@ -4,7 +4,8 @@ export default interface IExpensesData {
     description: string,
     amount: string,
     category: string,
-    subcategory: string,
+    subCategory: string,
+    subCategoryId: number,
     date: string,
     recurring: boolean,
     recurrencePeriod: string

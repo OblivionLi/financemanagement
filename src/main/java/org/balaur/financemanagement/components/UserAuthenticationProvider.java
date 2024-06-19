@@ -37,6 +37,7 @@ public class UserAuthenticationProvider {
                 .withExpiresAt(validity)
                 .withClaim("username", userDetailsResponse.getUsername())
                 .withClaim("roles", userDetailsResponse.getUserGroupCodes())
+                .withClaim("currencyCode", userDetailsResponse.getCurrencyCode())
                 .sign(algorithm);
     }
 

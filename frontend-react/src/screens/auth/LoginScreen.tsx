@@ -56,6 +56,7 @@ const LoginScreen = () => {
         UsersService.loginUser(formData)
             .then((response: any) => {
                 LocalStorageService.addUserTokenToLocalStorage(response.data.token)
+                LocalStorageService.addUserPreferredCurrencyToLocalStorage(response.data.currencyCode)
                 navigate("/")
             })
             .catch((e: any) => {

@@ -78,6 +78,7 @@ public class UserService implements UserDetailsService {
         newUser.setLocked(false);
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());
+        newUser.setPreferredCurrency(request.getCurrency());
 
         UserGroup userGroup = userGroupRepository.findByCode("ROLE_USER")
                 .orElseGet(() -> {
@@ -100,6 +101,7 @@ public class UserService implements UserDetailsService {
                 .username(newUser.getUsername())
                 .email(newUser.getEmail())
                 .userGroupCodes(UserServiceUtil.getUserGroupCodes(newUser))
+                .currencyCode(newUser.getPreferredCurrency())
                 .build();
 
         userDetailsResponse.setToken(userAuthenticationProvider.createToken(userDetailsResponse));
@@ -148,6 +150,7 @@ public class UserService implements UserDetailsService {
                 .username(foundUser.getUsername())
                 .email(foundUser.getEmail())
                 .userGroupCodes(UserServiceUtil.getUserGroupCodes(foundUser))
+                .currencyCode(foundUser.getPreferredCurrency())
                 .build();
 
         userDetailsResponse.setToken(userAuthenticationProvider.createToken(userDetailsResponse));
@@ -217,6 +220,7 @@ public class UserService implements UserDetailsService {
                 .username(foundUser.getUsername())
                 .email(foundUser.getEmail())
                 .userGroupCodes(UserServiceUtil.getUserGroupCodes(foundUser))
+                .currencyCode(foundUser.getPreferredCurrency())
                 .build();
 
         userDetailsResponse.setToken(userAuthenticationProvider.createToken(userDetailsResponse));
@@ -229,9 +233,14 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByEmail(email);
 
         if (user == null) {
-            log.warn("[ExpenseService] {} | User: {} not found.", new Date(), authentication.getName());
+            log.warn("[UserService] {} | User: {} not found.", new Date(), authentication.getName());
             throw new UsernameNotFoundException("User: " + authentication.getName() + " not found.");
         }
         return user;
+    }
+
+    public ResponseEntity<String> getPreferredCurrency(Authentication authentication) {
+        User user = getUserFromAuthentication(authentication);
+        return ResponseEntity.ok().body(user.getPreferredCurrency());
     }
 }

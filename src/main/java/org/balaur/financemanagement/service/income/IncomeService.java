@@ -60,6 +60,7 @@ public class IncomeService {
                 .date(income.getDate())
                 .recurring(income.isRecurring())
                 .recurrencePeriod(income.getRecurrencePeriod())
+                .currency(income.getCurrency())
                 .build();
     }
 
@@ -74,6 +75,7 @@ public class IncomeService {
         income.setDate(incomeRequest.getDate());
         income.setRecurrencePeriod(incomeRequest.getRecurrencePeriod());
         income.setRecurring(incomeRequest.isRecurring());
+        income.setCurrency(user.getPreferredCurrency());
 
         try {
             income = incomeRepository.save(income);

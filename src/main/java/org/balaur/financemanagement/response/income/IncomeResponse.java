@@ -17,4 +17,5 @@ public class IncomeResponse {
     private LocalDateTime date;
     private boolean recurring;
     private String recurrencePeriod;
+    private String currency;
 }

@@ -3,11 +3,9 @@ package org.balaur.financemanagement.service.expense;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.balaur.financemanagement.model.currency.Currency;
 import org.balaur.financemanagement.model.expense.Expense;
 import org.balaur.financemanagement.model.expense.ExpenseSubCategory;
 import org.balaur.financemanagement.model.user.User;
-import org.balaur.financemanagement.repository.CurrencyRepository;
 import org.balaur.financemanagement.repository.ExpenseRepository;
 import org.balaur.financemanagement.repository.ExpenseSubCategoryRepository;
 import org.balaur.financemanagement.request.expense.ExpenseEditRequest;
@@ -32,18 +30,12 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final UserService userService;
     private final ExpenseSubCategoryRepository subCategoryRepository;
-    private final CurrencyRepository currencyRepository;
 
     public ResponseEntity<ExpenseResponse> addExpense(Authentication authentication, @Valid ExpenseRequest expenseRequest) {
         User user = userService.getUserFromAuthentication(authentication);
 
         ExpenseSubCategory subCategory = subCategoryRepository.findById(expenseRequest.getSubCategoryId()).orElse(null);
         if (subCategory == null || !subCategory.getUser().getId().equals(user.getId())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
-
-        Currency currency = currencyRepository.findById(expenseRequest.getCurrencyId()).orElse(null);
-        if (currency == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
 
@@ -55,7 +47,7 @@ public class ExpenseService {
         expense.setDate(expenseRequest.getDate());
         expense.setRecurring(expenseRequest.isRecurring());
         expense.setRecurrencePeriod(expenseRequest.getRecurrencePeriod());
-        expense.setCurrency(currency);
+        expense.setCurrency(user.getPreferredCurrency());
 
         try {
             expense = expenseRepository.save(expense);
@@ -161,10 +153,11 @@ public class ExpenseService {
                 .amount(expense.getAmount())
                 .category(expense.getSubCategory().getCategory().getDisplayName())
                 .subCategory(expense.getSubCategory().getName())
+                .subCategoryId(expense.getSubCategory().getId())
                 .date(expense.getDate())
                 .recurring(expense.isRecurring())
                 .recurrencePeriod(expense.getRecurrencePeriod())
-                .currencyCode(expense.getCurrency().getCode())
+                .currencyCode(expense.getCurrency())
                 .build();
     }
 

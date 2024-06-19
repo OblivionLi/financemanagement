@@ -1,12 +1,16 @@
 import React, {ChangeEvent, FormEvent, useEffect, useState} from 'react';
 import {Link, useNavigate} from "react-router-dom";
-import {Button, Paper, TextField} from "@mui/material";
+import {Button, FormControl, InputLabel, Paper, Select, TextField} from "@mui/material";
 import BreadcrumbMulti from "../../components/BreadcrumbMulti";
 import UsersService from "../../services/UsersService";
 import LocalStorageService from "../../services/LocalStorageService";
+import MenuItem from "@mui/material/MenuItem";
+import {ICurrencyData} from "../../types/currencies/ICurrencyData";
+import { currencies } from "../finances/currencies";
 
 const RegisterScreen = () => {
     const navigate = useNavigate();
+    const [selectedCurrency, setSelectedCurrency] = useState<string>("EUR");
 
     const checkTokenAndRedirect = () => {
         const isUserLoggedIn = LocalStorageService.isUserLogged();
@@ -59,7 +63,12 @@ const RegisterScreen = () => {
             return;
         }
 
-        registerUser(formData);
+        const dataToSubmit = {
+            ...formData,
+            currency: selectedCurrency,
+        };
+
+        registerUser(dataToSubmit);
         navigate("/");
     }
 
@@ -139,6 +148,22 @@ const RegisterScreen = () => {
                         onChange={handleChange}
                         helperText={validationMessages.confirmPassword}
                     />
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel id="currency-label">Currency</InputLabel>
+                        <Select
+                            labelId="currency-label"
+                            id="currency"
+                            value={selectedCurrency}
+                            onChange={(e) => setSelectedCurrency(e.target.value)}
+                            label="Currency"
+                        >
+                            {currencies.map((currency) => (
+                                <MenuItem key={currency.code} value={currency.code}>
+                                    {currency.name} ({currency.code})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     <div className="auth-actions">
                         <Link to={"/login"} style={{textDecoration: "none"}}>Already have an account? Login
                             here..</Link>

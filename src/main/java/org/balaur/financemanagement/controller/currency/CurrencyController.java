@@ -1,13 +1,12 @@
-package org.balaur.financemanagement.controller;
+package org.balaur.financemanagement.controller.currency;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.balaur.financemanagement.response.CurrencyResponse;
+import org.balaur.financemanagement.request.currency.CurrencyUpdateRequest;
 import org.balaur.financemanagement.service.currency.CurrencyService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/currencies")
@@ -15,13 +14,8 @@ import java.util.List;
 public class CurrencyController {
     private final CurrencyService currencyService;
 
-    @GetMapping()
-    public ResponseEntity<List<CurrencyResponse>> getCurrencies() {
-        return currencyService.getCurrencies();
+    @PatchMapping("/update")
+    public ResponseEntity<String> updateCurrency(Authentication authentication, @Valid @RequestBody CurrencyUpdateRequest request) {
+        return currencyService.updateCurrency(authentication, request);
     }
-
-//    @PostMapping()
-//    public ResponseEntity<String> setAccountCurrency(@Valid @RequestBody CurrencyCreateRequest currencyCreateRequest) {
-//        return currencyService.setAccountCurrency();
-//    }
 }

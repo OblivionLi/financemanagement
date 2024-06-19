@@ -5,5 +5,4 @@ export interface IExpenseCreateRequest {
     date: string;
     recurring: boolean;
     recurrencePeriod?: "WEEKLY" | "MONTHLY" | "YEARLY";
-    currencyId: number;
 }

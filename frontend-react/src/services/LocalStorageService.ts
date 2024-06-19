@@ -33,6 +33,19 @@ const addUserTokenToLocalStorage = (token: string) => {
     localStorage.setItem("userInfo", token)
 }
 
+const addUserPreferredCurrencyToLocalStorage = (currencyCode: string) => {
+    localStorage.setItem("userPreferredCurrency", currencyCode)
+}
+
+const getCurrencyCodeFromLocalStorage = () => {
+    const currencyCode = localStorage.getItem("userPreferredCurrency");
+    if (!currencyCode) {
+        return "Unknown Currency";
+    }
+
+    return currencyCode;
+}
+
 const getUsernameFromLocalStorage = () => {
     const token = localStorage.getItem("userInfo");
     if (!token || isUserTokenExpired(token)) {
@@ -114,7 +127,9 @@ const LocalStorageService = {
     logoutUser,
     getUserData,
     getEmailFromLocalStorage,
-    isUserAuthorized
+    isUserAuthorized,
+    addUserPreferredCurrencyToLocalStorage,
+    getCurrencyCodeFromLocalStorage
 }
 
 export default LocalStorageService;

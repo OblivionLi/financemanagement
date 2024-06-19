@@ -15,4 +15,5 @@ public class AuthResponse {
     private String email;
     private String token;
     private List<String> userGroupCodes;
+    private String currencyCode;
 }

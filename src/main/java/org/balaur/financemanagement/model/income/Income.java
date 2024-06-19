@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.balaur.financemanagement.model.currency.Currency;
 import org.balaur.financemanagement.model.user.User;
 
 import java.math.BigDecimal;
@@ -32,12 +31,9 @@ public class Income {
     private LocalDateTime date;
     private boolean recurring;
     private String recurrencePeriod;
+    private String currency;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "currency_id", nullable = false)
-    private Currency currency;
 }

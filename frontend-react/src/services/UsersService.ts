@@ -14,8 +14,6 @@ const registerUser = (formData: object) => {
 }
 
 const loginUser = (formData: object) => {
-    console.log("here in login");
-    console.log(formData);
     return axios.post<Array<IUserDtoResponse>>(`/api/auth/login`, JSON.stringify(formData), {
         headers: {
             'Content-Type': 'application/json',

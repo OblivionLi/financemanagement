@@ -3,5 +3,6 @@ export default interface IUserDtoResponse {
     username: string;
     email: string;
     token: string;
-    userGroupCodes: string[]
+    userGroupCodes: string[];
+    currencyCode: string;
 }

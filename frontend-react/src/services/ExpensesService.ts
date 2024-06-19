@@ -46,12 +46,32 @@ const getCurrencies = () => {
     });
 }
 
+const deleteExpense = (id: number) => {
+    return axios.delete(`/api/expenses/delete/${id}`, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    })
+}
+
+const editExpense = (id: number, data: object) => {
+    return axios.patch(`/api/expenses/edit/${id}`, data, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    })
+}
+
 const ExpensesService = {
     getAllExpensesNoPagination,
     addExpense,
     getExpenseSubCategories,
     addExpenseSubCategory,
-    getCurrencies
+    getCurrencies,
+    deleteExpense,
+    editExpense
 };
 
 export default ExpensesService;
