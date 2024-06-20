@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import IExpenseEditModalProps from "../types/IExpenseEditModalProps";
-import {IExpenseCreateRequest} from "../types/expenses/IExpenseCreateRequest";
 import {IExpenseSubCategoryData} from "../types/expenses/IExpenseSubCategoryData";
 import {IExpenseSubCategoryCreateRequest} from "../types/expenses/IExpenseSubCategoryCreateRequest";
 import LocalStorageService from "../services/LocalStorageService";

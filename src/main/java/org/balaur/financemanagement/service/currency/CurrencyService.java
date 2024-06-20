@@ -9,6 +9,7 @@ import org.balaur.financemanagement.repository.ExpenseRepository;
 import org.balaur.financemanagement.repository.IncomeRepository;
 import org.balaur.financemanagement.repository.UserRepository;
 import org.balaur.financemanagement.request.currency.CurrencyUpdateRequest;
+import org.balaur.financemanagement.response.currency.UpdatedCurrencyResponse;
 import org.balaur.financemanagement.service.RateLimitService;
 import org.balaur.financemanagement.service.user.UserService;
 import org.springframework.cache.Cache;
@@ -66,18 +67,22 @@ public class CurrencyService {
 
 
     @Transactional
-    public ResponseEntity<String> updateCurrency(Authentication authentication, CurrencyUpdateRequest request) {
+    public ResponseEntity<UpdatedCurrencyResponse> updateCurrency(Authentication authentication, CurrencyUpdateRequest request) {
         User user = userService.getUserFromAuthentication(authentication);
 
+        UpdatedCurrencyResponse response = new UpdatedCurrencyResponse();
+
         if (rateLimitService.isRateLimitRequest(user.getEmail())) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Rate limit exceeded");
+            response.setMessage("Rate limit exceeded");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
         }
 
         String oldCurrencyCode = user.getPreferredCurrency();
 
         String code = getCurrencyName(request.getCurrencyCode());
         if (code.equals("Unknown Currency")) {
-            return ResponseEntity.badRequest().body(null);
+            response.setMessage("Unknown Currency");
+            return ResponseEntity.badRequest().body(response);
         }
 
         user.setPreferredCurrency(request.getCurrencyCode());
@@ -90,8 +95,10 @@ public class CurrencyService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
+        response.setMessage("Currency updated successfully");
+        response.setCurrency(request.getCurrencyCode());
         if (!request.isConvertAmounts()) {
-            return ResponseEntity.ok("Currency updated successfully");
+            return ResponseEntity.ok(response);
         }
 
         double getNewRate = getExchangeRate(oldCurrencyCode, request.getCurrencyCode());
@@ -99,8 +106,9 @@ public class CurrencyService {
         try {
             updateIncomesAmounts(request.getCurrencyCode(), getNewRate);
             updateExpensesAmounts(request.getCurrencyCode(), getNewRate);
+            response.setMessage("Currency and amounts updated successfully");
 
-            return ResponseEntity.ok("Currency and amounts updated successfully");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("[CurrencyService] {} | Error updating incomes/expenses amounts: {}", new Date(), e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

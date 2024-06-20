@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Typography from "@mui/material/Typography";
-import {Button, Paper, Skeleton, TextField, Tooltip} from "@mui/material";
+import {Button, FormControl, InputLabel, Paper, Select, Skeleton, TextField, Tooltip} from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import Box from "@mui/material/Box";
 import DataTable, {TableColumn} from "react-data-table-component";
@@ -15,6 +15,8 @@ import AddExpenseDialog from "../../components/AddExpenseDialog";
 import {format} from "date-fns";
 import Swal from 'sweetalert2'
 import EditExpenseDialog from "../../components/EditExpenseDialog";
+import UpdateCurrencyDialog from "../../components/UpdateCurrencyDialog";
+import MenuItem from "@mui/material/MenuItem";
 
 const ExpensesScreen = () => {
     const navigate = useNavigate();
@@ -24,9 +26,16 @@ const ExpensesScreen = () => {
     const isUserLogged = LocalStorageService.isUserLogged();
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
     const [currencyCode, setCurrencyCode] = useState('');
     const [selectedExpense, setSelectedExpense] = useState<IExpensesData | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [month, setMonth] = useState<number | null>(null);
+    const [minYear, setMinYear] = useState<number | null>(null);
+    const [maxYear, setMaxYear] = useState<number | null>(null);
+    const [yearlyTotal, setYearlyTotal] = useState<number | null>(null);
+    const [monthlyTotal, setMonthlyTotal] = useState<number | null>(null);
 
     useEffect(() => {
         if (!isUserLogged) {
@@ -35,6 +44,7 @@ const ExpensesScreen = () => {
         }
 
         fetchExpenses();
+        fetchYears();
 
         if (selectedExpense) {
             setEditDialogOpen(true);
@@ -42,7 +52,7 @@ const ExpensesScreen = () => {
 
         const userPreferredCurrency = LocalStorageService.getCurrencyCodeFromLocalStorage();
         setCurrencyCode(userPreferredCurrency);
-    }, []);
+    }, [isUserLogged, navigate, selectedExpense]);
 
     const fetchExpenses = () => {
         ExpensesService.getAllExpensesNoPagination()
@@ -52,6 +62,57 @@ const ExpensesScreen = () => {
             })
             .catch((e: Error) => {
                 console.log(e);
+            });
+    };
+
+    const fetchYears = () => {
+        let localMinYear: number | null = null;
+        let localMaxYear: number | null = null;
+
+        ExpensesService.getMinYear()
+            .then((response: any) => {
+                localMinYear = response.data;
+                setMinYear(localMinYear);
+                return ExpensesService.getMaxYear();
+            })
+            .then((response: any) => {
+                localMaxYear = response.data;
+                setMaxYear(localMaxYear);
+                if (localMinYear !== null && localMinYear === localMaxYear) {
+                    setYear(localMinYear);
+                    fetchExpensesByYear(localMinYear);
+                }
+            })
+            .catch((e: Error) => {
+                console.log(e);
+            });
+    };
+
+    const fetchExpensesByYear = (year: number) => {
+        setLoading(true);
+        ExpensesService.getExpensesByYear(year)
+            .then((response: any) => {
+                setExpenses(response.data.expenses);
+                setYearlyTotal(response.data.yearlyTotal);
+                setLoading(false);
+            })
+            .catch((e: Error) => {
+                console.log(e);
+                setLoading(false);
+            });
+    };
+
+    const fetchExpensesByMonth = (year: number, month: number) => {
+        setLoading(true);
+        ExpensesService.getExpensesByMonth(year, month)
+            .then((response: any) => {
+                setExpenses(response.data.expenses);
+                setMonthlyTotal(response.data.monthlyTotal);
+                setLoading(false);
+            })
+            .catch((e: Error) => {
+                console.log(e);
+                setLoading(false);
             });
     };
 
@@ -92,7 +153,8 @@ const ExpensesScreen = () => {
                     title: "Deleted!",
                     text: response.data,
                     icon: "success"
-                }).then(r => {});
+                }).then(r => {
+                });
 
                 fetchExpenses();
             })
@@ -101,7 +163,8 @@ const ExpensesScreen = () => {
                     icon: "error",
                     title: "Oops...",
                     text: "Something went wrong!"
-                }).then(r => {});
+                }).then(r => {
+                });
 
                 console.log(e);
             });
@@ -110,6 +173,13 @@ const ExpensesScreen = () => {
     const handleEditDialogClose = () => {
         setEditDialogOpen(false);
         setSelectedExpense(null);
+        fetchExpenses();
+    }
+
+    const handleUpdateCurrencyDialogClose = () => {
+        setUpdateDialogOpen(false);
+        const userPreferredCurrency = LocalStorageService.getCurrencyCodeFromLocalStorage();
+        setCurrencyCode(userPreferredCurrency);
         fetchExpenses();
     }
 
@@ -202,7 +272,8 @@ const ExpensesScreen = () => {
     ];
 
     const handleUpdateCurrency = () => {
-        console.log('update clicked');
+        setUpdateDialogOpen(true);
+        setCurrencyCode(LocalStorageService.getCurrencyCodeFromLocalStorage());
     }
 
     const filteredExpenses = expenses.filter(expense =>
@@ -248,17 +319,55 @@ const ExpensesScreen = () => {
                 </Button>
             </Box>
 
-            <Box display="flex" justifyContent="flex-end" mb={2}>
+            <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2} gap={2}>
                 <TextField
                     label="Search Expense"
                     variant="outlined"
                     size="small"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
+                    sx={{ width: '200px' }}
                 />
-                <Typography variant="caption" color="textSecondary" sx={{ mt: 1, ml: 2 }}>
-                    Search by category, subcategory, or description.
-                </Typography>
+                <FormControl variant="outlined" size="small" sx={{ width: '200px' }}>
+                    <InputLabel id="year-select-label">Year</InputLabel>
+                    <Select
+                        labelId="year-select-label"
+                        value={year}
+                        onChange={(e) => {
+                            const selectedYear = e.target.value as number;
+                            setYear(selectedYear);
+                            fetchExpensesByYear(selectedYear);
+                            setMonth(null); // Reset month selection
+                        }}
+                        label="Year"
+                    >
+                        {minYear && maxYear && [...Array(maxYear - minYear + 1)].map((_, i) => {
+                            const currentYear = minYear + i;
+                            return <MenuItem key={currentYear} value={currentYear}>{currentYear}</MenuItem>;
+                        })}
+                    </Select>
+                </FormControl>
+                {year && (
+                    <FormControl variant="outlined" size="small" sx={{ width: '200px' }}>
+                        <InputLabel id="month-select-label">Month</InputLabel>
+                        <Select
+                            labelId="month-select-label"
+                            value={month ?? ''}
+                            onChange={(e) => {
+                                const selectedMonth = e.target.value as number;
+                                setMonth(selectedMonth);
+                                fetchExpensesByMonth(year, selectedMonth);
+                            }}
+                            label="Month"
+                        >
+                            {[...Array(12)].map((_, i) => (
+                                <MenuItem key={i + 1} value={i + 1}>
+                                    {new Date(0, i).toLocaleString('default', {month: 'long'})}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                )}
             </Box>
 
             {loading ?
@@ -285,20 +394,44 @@ const ExpensesScreen = () => {
                         ))}
                     </Box>
                 ) : (
-                    <Paper elevation={3}
-                           sx={{padding: 3, marginTop: 3, marginLeft: 'auto', marginRight: 'auto'}}>
+                    <>
+                        <Paper elevation={3}
+                               sx={{padding: 3, marginTop: 3, marginLeft: 'auto', marginRight: 'auto'}}>
 
-                        <DataTable
-                            key={expenses.length}
-                            columns={columns}
-                            data={filteredExpenses}
-                            pagination
-                            expandableRows
-                            expandableRowsComponent={ExpandedExpenseDetails}
-                        />
-                    </Paper>
+                            <DataTable
+                                key={expenses.length}
+                                columns={columns}
+                                data={filteredExpenses}
+                                pagination
+                                expandableRows
+                                expandableRowsComponent={ExpandedExpenseDetails}
+                            />
+                        </Paper>
+
+                    </>
                 )
             }
+
+            <Box mt={3} p={2} textAlign="center">
+                <Typography variant="h6">
+                    Yearly Total for {year}:
+                </Typography>
+                <Typography variant="h4" color="primary">
+                    {yearlyTotal ? `${yearlyTotal.toString()} ${currencyCode}` : 'No expenses for this year'}
+                </Typography>
+
+                {month !== null && (
+                    <>
+                        <Typography variant="h6" mt={2}>
+                            Monthly Total for {new Date(0, month - 1).toLocaleString('default', { month: 'long' })} {year}:
+                        </Typography>
+                        <Typography variant="h4" color="secondary">
+                            {monthlyTotal ? `${monthlyTotal.toString()} ${currencyCode}` : 'No expenses for this month'}
+                        </Typography>
+                    </>
+                )}
+            </Box>
+
 
             <AddExpenseDialog
                 open={addDialogOpen}
@@ -309,6 +442,12 @@ const ExpensesScreen = () => {
                 open={editDialogOpen}
                 onClose={handleEditDialogClose}
                 rowData={selectedExpense}
+            />
+
+
+            <UpdateCurrencyDialog
+                open={updateDialogOpen}
+                onClose={handleUpdateCurrencyDialogClose}
             />
         </>
     );

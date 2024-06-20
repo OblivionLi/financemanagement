@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
 @Table(
     name = "expenses",
     indexes = {
-            @Index(name = "idx_recurring", columnList = "recurring")
+            @Index(name = "idx_recurring", columnList = "recurring"),
+            @Index(name = "idx_date", columnList = "date"),
     }
 )
 @Getter

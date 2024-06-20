@@ -64,6 +64,51 @@ const editExpense = (id: number, data: object) => {
     })
 }
 
+const updateCurrency = (data: object) => {
+    return axios.patch(`/api/currencies/update`, data, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    })
+}
+
+const getExpensesByYear = (year: number) => {
+    return axios.get(`/api/stats/expenses/year/${year}`, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    });
+}
+
+const getExpensesByMonth = (year: number, month: number) => {
+    return axios.get(`/api/stats/expenses/year/${year}/month/${month}`, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    });
+}
+
+const getMinYear = () => {
+    return axios.get(`/api/stats/expenses/min-year`, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    });
+}
+
+const getMaxYear = () => {
+    return axios.get(`/api/stats/expenses/max-year`, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    });
+}
+
 const ExpensesService = {
     getAllExpensesNoPagination,
     addExpense,
@@ -71,7 +116,12 @@ const ExpensesService = {
     addExpenseSubCategory,
     getCurrencies,
     deleteExpense,
-    editExpense
+    editExpense,
+    updateCurrency,
+    getExpensesByYear,
+    getExpensesByMonth,
+    getMinYear,
+    getMaxYear
 };
 
 export default ExpensesService;
