@@ -25,6 +25,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import ChartsScreen from "./ChartsScreen";
 import MenuIcon from '@mui/icons-material/Menu';
+import IncomesScreen from "./IncomesScreen";
 
 const drawerWidth = 240;
 
@@ -82,20 +83,6 @@ const FinancesScreen = () => {
                     </ListItemButton>
                 </ListItem>
             </List>
-            <List>
-                <ListItem disablePadding>
-                    <ListItemButton>
-                        <ListItemIcon>
-                            <RepeatIcon />
-                        </ListItemIcon>
-                        <Link
-                            to={"/expenses/recurring"}
-                        >
-                            Recurring Expenses
-                        </Link>
-                    </ListItemButton>
-                </ListItem>
-            </List>
             <Divider />
             <List>
                 <ListItem disablePadding>
@@ -107,20 +94,6 @@ const FinancesScreen = () => {
                             to={"/incomes"}
                         >
                             Incomes
-                        </Link>
-                    </ListItemButton>
-                </ListItem>
-            </List>
-            <List>
-                <ListItem disablePadding>
-                    <ListItemButton>
-                        <ListItemIcon>
-                            <RepeatIcon />
-                        </ListItemIcon>
-                        <Link
-                            to={"/incomes/recurring"}
-                        >
-                            Recurring Incomes
                         </Link>
                     </ListItemButton>
                 </ListItem>
@@ -205,18 +178,10 @@ const FinancesScreen = () => {
                     <Routes>
                         <Route path="/" element={<ChartsScreen />} />
                         <Route path="/expenses" element={<ExpensesScreen />} />
+                        <Route path="/incomes" element={<IncomesScreen />} />
                     </Routes>
                 </Box>
             </Box>
-
-            {/*<Paper elevation={3} className="paper-content">*/}
-            {/*    sdfg*/}
-            {/*    <Divider sx={{width: '50%', margin: '2rem auto'}}/>*/}
-            {/*    /!*<ExpensesScreen />*!/*/}
-            {/*</Paper>*/}
-            {/*  Charts */}
-            {/*  Expenses  */}
-            {/*  Incomes  */}
         </>
     );
 };

@@ -1,35 +1,31 @@
 import React, {useEffect, useState} from 'react';
 import Typography from "@mui/material/Typography";
-import {Button, Divider, FormControl, InputLabel, Paper, Select, Skeleton, TextField, Tooltip} from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
 import Box from "@mui/material/Box";
-import DataTable, {TableColumn} from "react-data-table-component";
-import IExpensesData from "../../types/expenses/IExpensesData";
-import {useNavigate} from "react-router-dom";
 import LocalStorageService from "../../services/LocalStorageService";
-import ExpensesService from "../../services/ExpensesService";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ExpandedExpenseDetails from "../../components/ExpandedExpenseDetails";
-import AddExpenseDialog from "../../components/AddExpenseDialog";
+import {useNavigate} from "react-router-dom";
+import {Button, Divider, FormControl, InputLabel, Paper, Select, Skeleton, TextField, Tooltip} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import IncomesService from "../../services/IncomesService";
+import {IIncomesData} from "../../types/incomes/IIncomesData";
+import Swal from "sweetalert2";
+import DataTable, {TableColumn} from "react-data-table-component";
 import {format} from "date-fns";
-import Swal from 'sweetalert2'
-import EditExpenseDialog from "../../components/EditExpenseDialog";
-import UpdateCurrencyDialog from "../../components/UpdateCurrencyDialog";
+import DeleteIcon from "@mui/icons-material/Delete";
 import MenuItem from "@mui/material/MenuItem";
-import DownloadExpensesButtons from "../../components/DownloadExpensesButtons";
+import UpdateCurrencyDialog from "../../components/UpdateCurrencyDialog";
 
-const ExpensesScreen = () => {
+const IncomesScreen = () => {
     const navigate = useNavigate();
 
-    const [expenses, setExpenses] = useState<IExpensesData[]>([]);
+    const [incomes, setIncomes] = useState<IIncomesData[]>([]);
     const [loading, setLoading] = useState(true);
     const isUserLogged = LocalStorageService.isUserLogged();
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
     const [currencyCode, setCurrencyCode] = useState('');
-    const [selectedExpense, setSelectedExpense] = useState<IExpensesData | null>(null);
+    const [selectedIncome, setSelectedIncome] = useState<IIncomesData | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [year, setYear] = useState(new Date().getFullYear());
     const [month, setMonth] = useState<number | null>(null);
@@ -44,21 +40,21 @@ const ExpensesScreen = () => {
             return;
         }
 
-        fetchExpenses();
+        fetchIncomes();
         fetchYears();
 
-        if (selectedExpense) {
+        if (selectedIncome) {
             setEditDialogOpen(true);
         }
 
         const userPreferredCurrency = LocalStorageService.getCurrencyCodeFromLocalStorage();
         setCurrencyCode(userPreferredCurrency);
-    }, [isUserLogged, navigate, selectedExpense]);
+    }, [isUserLogged, navigate, selectedIncome]);
 
-    const fetchExpenses = () => {
-        ExpensesService.getAllExpensesNoPagination()
+    const fetchIncomes = () => {
+        IncomesService.getAllIncomesNoPagination()
             .then((response: any) => {
-                setExpenses(response.data as IExpensesData[])
+                setIncomes(response.data as IIncomesData[])
                 setLoading(false);
             })
             .catch((e: Error) => {
@@ -70,18 +66,18 @@ const ExpensesScreen = () => {
         let localMinYear: number | null = null;
         let localMaxYear: number | null = null;
 
-        ExpensesService.getMinYear()
+        IncomesService.getMinYear()
             .then((response: any) => {
                 localMinYear = response.data;
                 setMinYear(localMinYear);
-                return ExpensesService.getMaxYear();
+                return IncomesService.getMaxYear();
             })
             .then((response: any) => {
                 localMaxYear = response.data;
                 setMaxYear(localMaxYear);
                 if (localMinYear !== null && localMinYear === localMaxYear) {
                     setYear(localMinYear);
-                    fetchExpensesByYear(localMinYear);
+                    fetchIncomesByYear(localMinYear);
                 }
             })
             .catch((e: Error) => {
@@ -89,11 +85,11 @@ const ExpensesScreen = () => {
             });
     };
 
-    const fetchExpensesByYear = (year: number) => {
+    const fetchIncomesByYear = (year: number) => {
         setLoading(true);
-        ExpensesService.getExpensesByYear(year)
+        IncomesService.getIncomesByYear(year)
             .then((response: any) => {
-                setExpenses(response.data.expenses);
+                setIncomes(response.data.expenses);
                 setYearlyTotal(response.data.yearlyTotal);
                 setLoading(false);
             })
@@ -103,11 +99,11 @@ const ExpensesScreen = () => {
             });
     };
 
-    const fetchExpensesByMonth = (year: number, month: number) => {
+    const fetchIncomesByMonth = (year: number, month: number) => {
         setLoading(true);
-        ExpensesService.getExpensesByMonth(year, month)
+        IncomesService.getIncomesByMonth(year, month)
             .then((response: any) => {
-                setExpenses(response.data.expenses);
+                setIncomes(response.data.expenses);
                 setMonthlyTotal(response.data.monthlyTotal);
                 setLoading(false);
             })
@@ -123,17 +119,16 @@ const ExpensesScreen = () => {
 
     const handleAddDialogClose = () => {
         setAddDialogOpen(false);
-        fetchExpenses();
+        fetchIncomes();
     }
-
-    const handleEdit = (row: IExpensesData) => {
-        setSelectedExpense(row);
+    const handleEdit = (row: IIncomesData) => {
+        setSelectedIncome(row);
         setEditDialogOpen(true);
     }
 
-    const handleDelete = (row: IExpensesData) => {
+    const handleDelete = (row: IIncomesData) => {
         Swal.fire({
-            title: "Are you sure you want to delete " + row.category + " | " + row.subCategory + " expense?",
+            title: "Are you sure you want to delete " + row.source + " income?",
             text: "You won't be able to revert this!",
             icon: "warning",
             showCancelButton: true,
@@ -142,13 +137,13 @@ const ExpensesScreen = () => {
             confirmButtonText: "Yes, delete it!"
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteExpense(row.id)
+                deleteIncome(row.id)
             }
         });
     }
 
-    const deleteExpense = (id: number) => {
-        ExpensesService.deleteExpense(id)
+    const deleteIncome = (id: number) => {
+        IncomesService.deleteIncome(id)
             .then((response: any) => {
                 Swal.fire({
                     title: "Deleted!",
@@ -157,7 +152,7 @@ const ExpensesScreen = () => {
                 }).then(r => {
                 });
 
-                fetchExpenses();
+                fetchIncomes();
             })
             .catch((e: Error) => {
                 Swal.fire({
@@ -173,8 +168,8 @@ const ExpensesScreen = () => {
 
     const handleEditDialogClose = () => {
         setEditDialogOpen(false);
-        setSelectedExpense(null);
-        fetchExpenses();
+        setSelectedIncome(null);
+        fetchIncomes();
     }
 
     const handleUpdateCurrencyDialogClose = () => {
@@ -183,20 +178,20 @@ const ExpensesScreen = () => {
         setCurrencyCode(userPreferredCurrency);
 
         if (year !== null) {
-            fetchExpensesByYear(year);
+            fetchIncomesByYear(year);
         }
         if (year !== null && month !== null) {
-            fetchExpensesByMonth(year, month);
+            fetchIncomesByMonth(year, month);
         }
     }
 
     const createTooltipColumn = (
         name: string,
-        selector: (row: IExpensesData) => string
-    ): TableColumn<IExpensesData> => {
+        selector: (row: IIncomesData) => string
+    ): TableColumn<IIncomesData> => {
         return {
             name: <Typography variant="body1" color="primary">{name}</Typography>,
-            cell: (row: IExpensesData) => (
+            cell: (row: IIncomesData) => (
                 <Tooltip title={selector(row)} arrow>
                     <Typography variant="body2" noWrap>
                         {selector(row)}
@@ -207,17 +202,16 @@ const ExpensesScreen = () => {
         };
     };
 
-    const columns: TableColumn<IExpensesData>[] = [
+    const columns: TableColumn<IIncomesData>[] = [
         {
             name: <Typography variant="body1" color="primary">ID</Typography>,
             selector: row => row.id,
             sortable: true,
         },
-        createTooltipColumn('Category', (row) => row.category),
-        createTooltipColumn('SubCategory', (row) => row.subCategory),
+        createTooltipColumn('Category', (row) => row.source),
         {
             name: <Typography variant="body1" color="primary">Amount</Typography>,
-            cell: (row: IExpensesData) => (
+            cell: (row: IIncomesData) => (
                 <Typography variant="body2" noWrap>
                     {row.amount} {currencyCode}
                 </Typography>
@@ -226,7 +220,7 @@ const ExpensesScreen = () => {
         },
         {
             name: <Typography variant="body1" color="primary">Recurring</Typography>,
-            cell: (row: IExpensesData) => (
+            cell: (row: IIncomesData) => (
                 <Typography variant="body2" noWrap>
                     {row.recurring ? 'Yes' : 'No'}
                 </Typography>
@@ -241,7 +235,7 @@ const ExpensesScreen = () => {
         {
             name: <Typography variant="body1" color="primary">Date</Typography>,
             selector: row => row.date,
-            cell: (row: IExpensesData) => (
+            cell: (row: IIncomesData) => (
                 <Typography variant="caption">
                     {format(new Date(row.date), 'PPP p')}
                 </Typography>
@@ -250,7 +244,7 @@ const ExpensesScreen = () => {
         },
         {
             name: <Typography variant="body1" color="primary">Options</Typography>,
-            cell: (row: IExpensesData) => (
+            cell: (row: IIncomesData) => (
                 <Box sx={{mt: 1, mb: 1, display: 'flex', flexDirection: 'column', gap: '8px'}}>
                     <Button
                         variant="contained"
@@ -283,17 +277,16 @@ const ExpensesScreen = () => {
         setCurrencyCode(LocalStorageService.getCurrencyCodeFromLocalStorage());
     }
 
-    const filteredExpenses = expenses.filter(expense =>
-        expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        expense.subCategory.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredIncomes = incomes.filter(income =>
+        income.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        income.source.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
         <>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" gutterBottom>
-                    Expenses
+                    Incomes
                 </Typography>
                 <Box display="flex" flexDirection="column" alignItems="flex-end">
                     <Typography variant="subtitle1" color="textSecondary" gutterBottom>
@@ -304,6 +297,7 @@ const ExpensesScreen = () => {
                     </Typography>
                 </Box>
             </Box>
+
             <Box display="flex" justifyContent="flex-start" alignItems="center" mb={2}>
                 <Button
                     variant="contained"
@@ -326,16 +320,6 @@ const ExpensesScreen = () => {
                 </Button>
             </Box>
 
-            <Box display="flex" justifyContent="flex-start" alignItems="center" mb={2}>
-                <DownloadExpensesButtons
-                    expenses={expenses}
-                    year={year}
-                    month={month}
-                    currencyCode={currencyCode}
-                    monthlyTotal={monthlyTotal}
-                />
-            </Box>
-
             <Box display="flex" flexDirection="column" justifyContent="flex-end" alignItems="flex-start" mb={2} gap={2}
                  flexWrap="wrap">
                 <Box display="flex" flexDirection="row" flexWrap="wrap" alignItems="center" gap={2}>
@@ -355,7 +339,7 @@ const ExpensesScreen = () => {
                             onChange={(e) => {
                                 const selectedYear = e.target.value as number;
                                 setYear(selectedYear);
-                                fetchExpensesByYear(selectedYear);
+                                fetchIncomesByYear(selectedYear);
                                 setMonth(null); // Reset month selection
                             }}
                             label="Year"
@@ -375,7 +359,7 @@ const ExpensesScreen = () => {
                                 onChange={(e) => {
                                     const selectedMonth = e.target.value as number;
                                     setMonth(selectedMonth);
-                                    fetchExpensesByMonth(year, selectedMonth);
+                                    fetchIncomesByMonth(year, selectedMonth);
                                 }}
                                 label="Month"
                             >
@@ -434,12 +418,12 @@ const ExpensesScreen = () => {
                             <Divider />
 
                             <DataTable
-                                key={expenses.length}
+                                key={incomes.length}
                                 columns={columns}
-                                data={filteredExpenses}
+                                data={filteredIncomes}
                                 pagination
                                 expandableRows
-                                expandableRowsComponent={ExpandedExpenseDetails}
+                                expandableRowsComponent={ExpandedIncomeDetails}
                             />
                         </Paper>
 
@@ -447,15 +431,15 @@ const ExpensesScreen = () => {
                 )
             }
 
-            <AddExpenseDialog
+            <AddIncomeDialog
                 open={addDialogOpen}
                 onClose={handleAddDialogClose}
             />
 
-            <EditExpenseDialog
+            <EditIncomeDialog
                 open={editDialogOpen}
                 onClose={handleEditDialogClose}
-                rowData={selectedExpense}
+                rowData={selectedIncome}
             />
 
             <UpdateCurrencyDialog
@@ -466,4 +450,4 @@ const ExpensesScreen = () => {
     );
 };
 
-export default ExpensesScreen;
+export default IncomesScreen;
