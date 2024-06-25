@@ -60,7 +60,7 @@ public class IncomeService {
                 .date(income.getDate())
                 .recurring(income.isRecurring())
                 .recurrencePeriod(income.getRecurrencePeriod())
-                .currency(income.getCurrency())
+                .currencyCode(income.getCurrency())
                 .build();
     }
 

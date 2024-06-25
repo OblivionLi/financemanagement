@@ -1,9 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import IExpenseEditModalProps from "../types/IExpenseEditModalProps";
-import {IExpenseSubCategoryData} from "../types/expenses/IExpenseSubCategoryData";
-import {IExpenseSubCategoryCreateRequest} from "../types/expenses/IExpenseSubCategoryCreateRequest";
-import LocalStorageService from "../services/LocalStorageService";
-import ExpensesService from "../services/ExpensesService";
 import {
     Alert,
     Button, Checkbox,
@@ -16,16 +11,23 @@ import {
     TextField
 } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
+import {IExpenseCreateRequest} from "../../types/expenses/IExpenseCreateRequest";
+import ExpensesService from "../../services/ExpensesService";
+import {IExpenseSubCategoryData} from "../../types/expenses/IExpenseSubCategoryData";
 import Typography from "@mui/material/Typography";
+import {IExpenseSubCategoryCreateRequest} from "../../types/expenses/IExpenseSubCategoryCreateRequest";
+import LocalStorageService from "../../services/LocalStorageService";
+import IFinancialAddModalProps from "../../types/IFinancialAddModalProps";
 
-const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, rowData}) => {
-    const [formData, setFormData] = useState({
-        description: rowData?.description || '',
-        amount: rowData?.amount || '',
-        subCategoryId: rowData?.subCategoryId || 0,
-        date: rowData?.date || new Date().toISOString(),
-        recurring: rowData?.recurring || false,
-        recurrencePeriod: rowData?.recurrencePeriod || '',
+
+const AddExpenseDialog: React.FC<IFinancialAddModalProps> = ({open, onClose}) => {
+
+    const [formData, setFormData] = useState<IExpenseCreateRequest>({
+        description: '',
+        amount: '',
+        subCategoryId: 0,
+        date: new Date().toISOString(),
+        recurring: false
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -39,13 +41,13 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
     const [currencyCode, setCurrencyCode] = useState('');
 
     const categories = [
-        { value: 'SUBSCRIPTION', label: 'Subscription' },
-        { value: 'FOOD', label: 'Food' },
-        { value: 'UTILITIES', label: 'Utilities' },
-        { value: 'ENTERTAINMENT', label: 'Entertainment' },
-        { value: 'TRANSPORTATION', label: 'Transportation' },
-        { value: 'HEALTHCARE', label: 'Healthcare' },
-        { value: 'OTHER', label: 'Other' },
+        {value: 'SUBSCRIPTION', label: 'Subscription'},
+        {value: 'FOOD', label: 'Food'},
+        {value: 'UTILITIES', label: 'Utilities'},
+        {value: 'ENTERTAINMENT', label: 'Entertainment'},
+        {value: 'TRANSPORTATION', label: 'Transportation'},
+        {value: 'HEALTHCARE', label: 'Healthcare'},
+        {value: 'OTHER', label: 'Other'},
     ];
 
     useEffect(() => {
@@ -55,16 +57,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
             const userPreferredCurrency = LocalStorageService.getCurrencyCodeFromLocalStorage();
             setCurrencyCode(userPreferredCurrency);
         }
-
-        setFormData({
-            description: rowData?.description || '',
-            amount: rowData?.amount || '',
-            subCategoryId: rowData?.subCategoryId || 0,
-            date: rowData?.date || new Date().toISOString(),
-            recurring: rowData?.recurring || false,
-            recurrencePeriod: rowData?.recurrencePeriod || '',
-        })
-    }, [rowData, open]);
+    }, [open]);
 
     const fetchSubcategories = async () => {
         ExpensesService.getExpenseSubCategories()
@@ -77,7 +70,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
     };
 
     const handleSelectChange = (event: SelectChangeEvent<number>) => {
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         setFormData({
             ...formData,
             [name]: value,
@@ -85,7 +78,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
     };
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type, checked } = event.target;
+        const {name, value, type, checked} = event.target;
         const newValue = type === 'checkbox' ? checked : value;
 
         setFormData({
@@ -95,7 +88,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
     };
 
     const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         const regex = /^\d+(\.\d{0,2})?$/;
         if (value === '' || regex.test(value)) {
             setFormData({
@@ -108,19 +101,18 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
 
-        const expenseData = {
+        const expenseData: IExpenseCreateRequest = {
             ...formData,
-            date: new Date(formData.date).toISOString(), // Convert to correct format
+            date: new Date().toISOString(),
         };
 
-        editExpense(expenseData);
-        onClose();
+        addExpense(expenseData);
     };
 
     const handleAddSubcategory = async () => {
         ExpensesService.addExpenseSubCategory(newSubcategory)
             .then((response: any) => {
-                setNewSubcategory({ name: '', category: '' })
+                setNewSubcategory({name: '', category: ''})
                 setIsAddingSubcategory(false);
                 setNewSubcategoryMessage("Subcategory added successfully.");
                 fetchSubcategories();
@@ -130,12 +122,11 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
             });
     };
 
-    const editExpense = (data: any) => {
-        if (rowData == null) {
-            return;
-        }
-
-        ExpensesService.editExpense(rowData.id, data)
+    const addExpense = (data: IExpenseCreateRequest) => {
+        ExpensesService.addExpense(data)
+            .then((response: any) => {
+                onClose();
+            })
             .catch((e: any) => {
                 console.error(e);
                 if (e.response && e.response.data && e.response.data.errors) {
@@ -146,10 +137,10 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth={"md"} fullWidth>
-            <DialogTitle>Edit Expense</DialogTitle>
+            <DialogTitle>Add Expense</DialogTitle>
             <DialogContent>
                 <Paper elevation={3}
-                       sx={{ padding: 3, marginTop: 3, width: '100%', marginLeft: 'auto', marginRight: 'auto' }}>
+                       sx={{padding: 3, marginTop: 3, width: '100%', marginLeft: 'auto', marginRight: 'auto'}}>
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
                             <Grid item xs={12}>
@@ -177,7 +168,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
                                 />
                             </Grid>
                             <Grid item xs={12}>
-                                {newSubcategoryMessage && (<Alert severity="success" sx={{ marginBottom: '1rem' }}>{newSubcategoryMessage}</Alert>)}
+                                {newSubcategoryMessage && (<Alert severity="success" sx={{marginBottom: '1rem'}}>{newSubcategoryMessage}</Alert>)}
                                 <FormControl fullWidth required error={!!errors.subCategoryId}>
                                     <InputLabel id="subcategory-label">SubCategory</InputLabel>
                                     <Select
@@ -216,7 +207,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
                                            marginRight: 'auto'
                                        }}>
                                     <Typography variant="h6" gutterBottom>Add New Subcategory</Typography>
-                                    <Alert severity="info" sx={{ marginBottom: "1rem" }}>
+                                    <Alert severity="info" sx={{marginBottom: "1rem"}}>
                                         {"Example: Category -> Utilities; SubCategory -> Electricity"}</Alert>
                                     <Grid container spacing={2}>
                                         <Grid item xs={12}>
@@ -259,7 +250,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
                                                 Add Subcategory
                                             </Button>
                                             <Button variant="outlined" color="secondary" fullWidth
-                                                    onClick={() => setIsAddingSubcategory(false)} sx={{ mt: 2 }}>
+                                                    onClick={() => setIsAddingSubcategory(false)} sx={{mt: 2}}>
                                                 Cancel
                                             </Button>
                                         </Grid>
@@ -300,7 +291,7 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
                                     <TextField
                                         label="Recurrence Period"
                                         name="recurrencePeriod"
-                                        value={formData.recurrencePeriod}
+                                        value={formData.recurrencePeriod || ''}
                                         onChange={handleChange}
                                         select
                                         fullWidth
@@ -315,19 +306,20 @@ const EditExpenseDialog: React.FC<IExpenseEditModalProps> = ({open, onClose, row
                                 </Grid>
                             )}
                             <Grid item xs={12}>
-                                <Alert severity="info" sx={{ marginBottom: '1rem' }}>Internally all finances are based on {currencyCode} until you update your preferred currency. You can do it 5 times a day only.</Alert>
+                                <Alert severity="info" sx={{marginBottom: '1rem'}}>Internally all finances are based on {currencyCode} until you update your preferred currency. You can do it 5 times a day only.</Alert>
                             </Grid>
                             <Grid item xs={12}>
                                 <Button type="submit" variant="contained" color="primary" fullWidth>
-                                    Update Expense
+                                    Create Expense
                                 </Button>
                             </Grid>
                         </Grid>
                     </form>
                 </Paper>
+
             </DialogContent>
         </Dialog>
     );
 };
 
-export default EditExpenseDialog;
+export default AddExpenseDialog;

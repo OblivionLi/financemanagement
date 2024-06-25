@@ -1,7 +1,7 @@
 import React from 'react';
 import {ExpanderComponentProps} from "react-data-table-component";
-import {Box, Divider, Paper, Typography} from "@mui/material";
-import IExpensesData from "../types/expenses/IExpensesData";
+import {Box, Paper, Typography} from "@mui/material";
+import IExpensesData from "../../types/expenses/IExpensesData";
 
 const ExpandedExpenseDetails: React.FC<ExpanderComponentProps<IExpensesData>> = ({data}) => {
     return (

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Button, Tooltip} from '@mui/material';
-import IExpensesData from "../types/expenses/IExpensesData";
+import IExpensesData from "../../types/expenses/IExpensesData";
 import {PDFDocument, rgb, StandardFonts} from 'pdf-lib';
 
 interface DownloadButtonsProps {

@@ -10,14 +10,14 @@ import LocalStorageService from "../../services/LocalStorageService";
 import ExpensesService from "../../services/ExpensesService";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ExpandedExpenseDetails from "../../components/ExpandedExpenseDetails";
-import AddExpenseDialog from "../../components/AddExpenseDialog";
+import ExpandedExpenseDetails from "../../components/expenses/ExpandedExpenseDetails";
+import AddExpenseDialog from "../../components/expenses/AddExpenseDialog";
 import {format} from "date-fns";
 import Swal from 'sweetalert2'
-import EditExpenseDialog from "../../components/EditExpenseDialog";
+import EditExpenseDialog from "../../components/expenses/EditExpenseDialog";
 import UpdateCurrencyDialog from "../../components/UpdateCurrencyDialog";
 import MenuItem from "@mui/material/MenuItem";
-import DownloadExpensesButtons from "../../components/DownloadExpensesButtons";
+import DownloadExpensesButtons from "../../components/expenses/DownloadExpensesButtons";
 
 const ExpensesScreen = () => {
     const navigate = useNavigate();
@@ -93,7 +93,7 @@ const ExpensesScreen = () => {
         setLoading(true);
         ExpensesService.getExpensesByYear(year)
             .then((response: any) => {
-                setExpenses(response.data.expenses);
+                setExpenses(response.data.records);
                 setYearlyTotal(response.data.yearlyTotal);
                 setLoading(false);
             })
@@ -107,7 +107,7 @@ const ExpensesScreen = () => {
         setLoading(true);
         ExpensesService.getExpensesByMonth(year, month)
             .then((response: any) => {
-                setExpenses(response.data.expenses);
+                setExpenses(response.data.records);
                 setMonthlyTotal(response.data.monthlyTotal);
                 setLoading(false);
             })
@@ -420,13 +420,19 @@ const ExpensesScreen = () => {
                                sx={{padding: 3, marginTop: 3, marginLeft: 'auto', marginRight: 'auto'}}>
 
                             <Typography variant="button" display="block" gutterBottom>
-                                Yearly Total for {year}: {yearlyTotal ? `${yearlyTotal.toString()} ${currencyCode}` : 'No expenses for this year'}
+                                Yearly Total for {year}:
+                                <Typography component="span" color={yearlyTotal ? "error" : "error"}>
+                                    {yearlyTotal ? ` - ${yearlyTotal.toString()} ${currencyCode}` : ' No expenses for this year'}
+                                </Typography>
                             </Typography>
 
                             {month !== null && (
                                 <>
                                     <Typography variant="button" display="block" gutterBottom>
-                                        Monthly Total for {new Date(0, month - 1).toLocaleString('default', {month: 'long'})} {year}: {monthlyTotal ? `${monthlyTotal.toString()} ${currencyCode}` : 'No expenses for this month'}
+                                        Monthly Total for {new Date(0, month - 1).toLocaleString('default', { month: 'long' })} {year}:
+                                        <Typography component="span" color={monthlyTotal ? "error" : "error"}>
+                                            {monthlyTotal ? ` - ${monthlyTotal.toString()} ${currencyCode}` : ' No expenses for this month'}
+                                        </Typography>
                                     </Typography>
                                 </>
                             )}

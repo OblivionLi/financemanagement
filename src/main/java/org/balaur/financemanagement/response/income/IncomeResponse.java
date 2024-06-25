@@ -2,13 +2,14 @@ package org.balaur.financemanagement.response.income;
 
 import lombok.Builder;
 import lombok.Data;
+import org.balaur.financemanagement.response.finances.FinancialResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class IncomeResponse {
+public class IncomeResponse implements FinancialResponse {
     private Long id;
     private String username;
     private String description;
@@ -17,5 +18,5 @@ public class IncomeResponse {
     private LocalDateTime date;
     private boolean recurring;
     private String recurrencePeriod;
-    private String currency;
+    private String currencyCode;
 }

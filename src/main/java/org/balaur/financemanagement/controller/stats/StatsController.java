@@ -17,23 +17,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class StatsController {
     private final StatsService statsService;
 
-    @GetMapping("/expenses/year/{year}")
-    public ResponseEntity<YearlyExpenseSummary> getExpensesByYear(Authentication authentication, @PathVariable int year) {
-        return statsService.getExpensesByYear(authentication, year);
+    @GetMapping("/{type}/year/{year}")
+    public ResponseEntity<YearlyExpenseSummary> getStatsByYear(Authentication authentication, @PathVariable String type, @PathVariable int year) {
+        return statsService.getStatsByYearType(authentication, type, year);
     }
 
-    @GetMapping("/expenses/year/{year}/month/{month}")
-    public ResponseEntity<MonthlyExpenseSummary> getExpensesByMonth(Authentication authentication, @PathVariable int year, @PathVariable int month) {
-        return statsService.getExpensesByMonth(authentication, year, month);
+    @GetMapping("/{type}/year/{year}/month/{month}")
+    public ResponseEntity<MonthlyExpenseSummary> getStatsByMonth(Authentication authentication, @PathVariable String type, @PathVariable int year, @PathVariable int month) {
+        return statsService.getStatsByMonthType(authentication, type, year, month);
     }
 
-    @GetMapping("/expenses/min-year")
-    public ResponseEntity<Integer> getMinYear(Authentication authentication) {
-        return statsService.getMinYear(authentication);
+    @GetMapping("/{type}/min-year")
+    public ResponseEntity<Integer> getMinYear(Authentication authentication, @PathVariable String type) {
+        return statsService.getMinYear(authentication, type);
     }
 
-    @GetMapping("/expenses/max-year")
-    public ResponseEntity<Integer> getMaxYear(Authentication authentication) {
-        return statsService.getMaxYear(authentication);
+    @GetMapping("/{type}/max-year")
+    public ResponseEntity<Integer> getMaxYear(Authentication authentication, @PathVariable String type) {
+        return statsService.getMaxYear(authentication, type);
     }
 }

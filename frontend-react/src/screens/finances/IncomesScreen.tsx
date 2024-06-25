@@ -14,6 +14,8 @@ import {format} from "date-fns";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MenuItem from "@mui/material/MenuItem";
 import UpdateCurrencyDialog from "../../components/UpdateCurrencyDialog";
+import ExpandedIncomesDetails from "../../components/ExpandedIncomesDetails";
+import AddIncomeDialog from "../../components/incomes/AddIncomeDialog";
 
 const IncomesScreen = () => {
     const navigate = useNavigate();
@@ -86,10 +88,15 @@ const IncomesScreen = () => {
     };
 
     const fetchIncomesByYear = (year: number) => {
+        if (year === null) {
+            return;
+        }
+
         setLoading(true);
+
         IncomesService.getIncomesByYear(year)
             .then((response: any) => {
-                setIncomes(response.data.expenses);
+                setIncomes(response.data.records);
                 setYearlyTotal(response.data.yearlyTotal);
                 setLoading(false);
             })
@@ -103,7 +110,7 @@ const IncomesScreen = () => {
         setLoading(true);
         IncomesService.getIncomesByMonth(year, month)
             .then((response: any) => {
-                setIncomes(response.data.expenses);
+                setIncomes(response.data.records);
                 setMonthlyTotal(response.data.monthlyTotal);
                 setLoading(false);
             })
@@ -277,7 +284,7 @@ const IncomesScreen = () => {
         setCurrencyCode(LocalStorageService.getCurrencyCodeFromLocalStorage());
     }
 
-    const filteredIncomes = incomes.filter(income =>
+    const filteredIncomes = (incomes ?? []).filter(income =>
         income.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         income.source.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -324,33 +331,36 @@ const IncomesScreen = () => {
                  flexWrap="wrap">
                 <Box display="flex" flexDirection="row" flexWrap="wrap" alignItems="center" gap={2}>
                     <TextField
-                        label="Search Expense"
+                        label="Search Income"
                         variant="outlined"
                         size="small"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         sx={{width: '200px'}}
                     />
-                    <FormControl variant="outlined" size="small" sx={{width: '200px'}}>
-                        <InputLabel id="year-select-label">Year</InputLabel>
-                        <Select
-                            labelId="year-select-label"
-                            value={year}
-                            onChange={(e) => {
-                                const selectedYear = e.target.value as number;
-                                setYear(selectedYear);
-                                fetchIncomesByYear(selectedYear);
-                                setMonth(null); // Reset month selection
-                            }}
-                            label="Year"
-                        >
-                            {minYear && maxYear && [...Array(maxYear - minYear + 1)].map((_, i) => {
-                                const currentYear = minYear + i;
-                                return <MenuItem key={currentYear} value={currentYear}>{currentYear}</MenuItem>;
-                            })}
-                        </Select>
-                    </FormControl>
-                    {year && (
+
+                    {minYear !== null && maxYear !== null && (
+                        <FormControl variant="outlined" size="small" sx={{width: '200px'}}>
+                            <InputLabel id="year-select-label">Year</InputLabel>
+                            <Select
+                                labelId="year-select-label"
+                                value={year}
+                                onChange={(e) => {
+                                    const selectedYear = e.target.value as number;
+                                    setYear(selectedYear);
+                                    fetchIncomesByYear(selectedYear);
+                                    setMonth(null); // Reset month selection
+                                }}
+                                label="Year"
+                            >
+                                {minYear && maxYear && [...Array(maxYear - minYear + 1)].map((_, i) => {
+                                    const currentYear = minYear + i;
+                                    return <MenuItem key={currentYear} value={currentYear}>{currentYear}</MenuItem>;
+                                })}
+                            </Select>
+                        </FormControl>
+                    )}
+                    {minYear !== null && maxYear !== null && year && (
                         <FormControl variant="outlined" size="small" sx={{width: '200px'}}>
                             <InputLabel id="month-select-label">Month</InputLabel>
                             <Select
@@ -404,18 +414,24 @@ const IncomesScreen = () => {
                                sx={{padding: 3, marginTop: 3, marginLeft: 'auto', marginRight: 'auto'}}>
 
                             <Typography variant="button" display="block" gutterBottom>
-                                Yearly Total for {year}: {yearlyTotal ? `${yearlyTotal.toString()} ${currencyCode}` : 'No expenses for this year'}
+                                Yearly Total for {year}:
+                                <Typography component="span" sx={{ color: yearlyTotal ? "green" : "error.main" }}>
+                                    {yearlyTotal ? ` ${yearlyTotal.toString()} ${currencyCode}` : ' No incomes for this year'}
+                                </Typography>
                             </Typography>
 
                             {month !== null && (
                                 <>
                                     <Typography variant="button" display="block" gutterBottom>
-                                        Monthly Total for {new Date(0, month - 1).toLocaleString('default', {month: 'long'})} {year}: {monthlyTotal ? `${monthlyTotal.toString()} ${currencyCode}` : 'No expenses for this month'}
+                                        Monthly Total for {new Date(0, month - 1).toLocaleString('default', { month: 'long' })} {year}:
+                                        <Typography component="span" sx={{ color: monthlyTotal ? "green" : "error.main" }}>
+                                            {monthlyTotal ? ` ${monthlyTotal.toString()} ${currencyCode}` : 'No incomes for this month'}
+                                        </Typography>
                                     </Typography>
                                 </>
                             )}
 
-                            <Divider />
+                            <Divider/>
 
                             <DataTable
                                 key={incomes.length}
@@ -423,7 +439,7 @@ const IncomesScreen = () => {
                                 data={filteredIncomes}
                                 pagination
                                 expandableRows
-                                expandableRowsComponent={ExpandedIncomeDetails}
+                                expandableRowsComponent={ExpandedIncomesDetails}
                             />
                         </Paper>
 
@@ -436,11 +452,11 @@ const IncomesScreen = () => {
                 onClose={handleAddDialogClose}
             />
 
-            <EditIncomeDialog
-                open={editDialogOpen}
-                onClose={handleEditDialogClose}
-                rowData={selectedIncome}
-            />
+            {/*<EditIncomeDialog*/}
+            {/*    open={editDialogOpen}*/}
+            {/*    onClose={handleEditDialogClose}*/}
+            {/*    rowData={selectedIncome}*/}
+            {/*/>*/}
 
             <UpdateCurrencyDialog
                 open={updateDialogOpen}
