@@ -64,6 +64,15 @@ const addIncome = (data: IIncomeCreateRequest) => {
     });
 }
 
+const editIncome = (id: number, data: object) => {
+    return axios.patch(`/api/incomes/edit/${id}`, data, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LocalStorageService.getUserToken()}`
+        },
+    })
+}
+
 const IncomesService = {
     getAllIncomesNoPagination,
     getIncomesByYear,
@@ -71,7 +80,8 @@ const IncomesService = {
     getMinYear,
     getMaxYear,
     deleteIncome,
-    addIncome
+    addIncome,
+    editIncome
 };
 
 export default IncomesService;

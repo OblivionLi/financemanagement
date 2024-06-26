@@ -24,7 +24,6 @@ const ExpensesScreen = () => {
 
     const [expenses, setExpenses] = useState<IExpensesData[]>([]);
     const [loading, setLoading] = useState(true);
-    const isUserLogged = LocalStorageService.isUserLogged();
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
@@ -37,12 +36,15 @@ const ExpensesScreen = () => {
     const [maxYear, setMaxYear] = useState<number | null>(null);
     const [yearlyTotal, setYearlyTotal] = useState<number | null>(null);
     const [monthlyTotal, setMonthlyTotal] = useState<number | null>(null);
+    const isUserLogged = LocalStorageService.isUserLogged();
 
     useEffect(() => {
         if (!isUserLogged) {
             navigate("/login");
             return;
         }
+
+        setLoading(false);
 
         fetchExpenses();
         fetchYears();
@@ -53,7 +55,7 @@ const ExpensesScreen = () => {
 
         const userPreferredCurrency = LocalStorageService.getCurrencyCodeFromLocalStorage();
         setCurrencyCode(userPreferredCurrency);
-    }, [isUserLogged, navigate, selectedExpense]);
+    }, [navigate, isUserLogged, selectedExpense]);
 
     const fetchExpenses = () => {
         ExpensesService.getAllExpensesNoPagination()
@@ -288,6 +290,10 @@ const ExpensesScreen = () => {
         expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
         expense.subCategory.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) {
+        return null;
+    }
 
     return (
         <>

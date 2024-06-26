@@ -2,7 +2,6 @@ import React from 'react';
 import './App.css';
 import './styles.css'
 import {Route, Routes} from "react-router-dom";
-import Homescreen from "./screens/Homescreen";
 import ResetPasswordScreen from "./screens/auth/ResetPasswordScreen";
 import RegisterScreen from "./screens/auth/RegisterScreen";
 import LoginScreen from "./screens/auth/LoginScreen";
@@ -12,7 +11,7 @@ import FinancesScreen from "./screens/finances/FinancesScreen";
 function App() {
     return (
         <Routes>
-            <Route path={"/*"} element={<FinancesScreen/>}/>
+            <Route path="/*" element={<FinancesScreen/>} />
 
             {/*  Auth routes  */}
             <Route path={"/register"} element={<RegisterScreen/>}/>

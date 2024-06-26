@@ -12,18 +12,19 @@ import {
 } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import LocalStorageService from "../../services/LocalStorageService";
-import IFinancialAddModalProps from "../../types/IFinancialAddModalProps";
 import {IIncomeCreateRequest} from "../../types/incomes/IIncomeCreateRequest";
 import IncomesService from "../../services/IncomesService";
+import {IIncomeEditModalProps} from "../../types/IIncomeEditModalProps";
 
-const AddIncomeDialog: React.FC<IFinancialAddModalProps> = ({open, onClose}) => {
+const EditIncomeDialog: React.FC<IIncomeEditModalProps> = ({open, onClose, rowData}) => {
 
-    const [formData, setFormData] = useState<IIncomeCreateRequest>({
-        description: '',
-        amount: '',
-        source: '',
-        date: new Date().toISOString(),
-        recurring: false
+    const [formData, setFormData] = useState({
+        description: rowData?.description || '',
+        amount: rowData?.amount || '',
+        source: rowData?.source || '',
+        date: rowData?.date || new Date().toISOString(),
+        recurring: rowData?.recurring || false,
+        recurrencePeriod: rowData?.recurrencePeriod || '',
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -34,7 +35,16 @@ const AddIncomeDialog: React.FC<IFinancialAddModalProps> = ({open, onClose}) => 
             const userPreferredCurrency = LocalStorageService.getCurrencyCodeFromLocalStorage();
             setCurrencyCode(userPreferredCurrency);
         }
-    }, [open]);
+
+        setFormData({
+            description: rowData?.description || '',
+            amount: rowData?.amount || '',
+            source: rowData?.source || '',
+            date: rowData?.date || new Date().toISOString(),
+            recurring: rowData?.recurring || false,
+            recurrencePeriod: rowData?.recurrencePeriod || '',
+        })
+    }, [rowData, open]);
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const {name, value, type, checked} = event.target;
@@ -60,19 +70,21 @@ const AddIncomeDialog: React.FC<IFinancialAddModalProps> = ({open, onClose}) => 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
 
-        const incomeData: IIncomeCreateRequest = {
+        const incomeData = {
             ...formData,
-            date: new Date().toISOString(),
+            date: new Date(formData.date).toISOString(),
         };
 
-        addIncome(incomeData);
+        editIncome(incomeData);
+        onClose();
     };
 
-    const addIncome = (data: IIncomeCreateRequest) => {
-        IncomesService.addIncome(data)
-            .then((response: any) => {
-                onClose();
-            })
+    const editIncome = (data: any) => {
+        if (rowData == null) {
+            return;
+        }
+
+        IncomesService.editIncome(rowData.id, data)
             .catch((e: any) => {
                 console.error(e);
                 if (e.response && e.response.data && e.response.data.errors) {
@@ -83,7 +95,7 @@ const AddIncomeDialog: React.FC<IFinancialAddModalProps> = ({open, onClose}) => 
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth={"md"} fullWidth>
-            <DialogTitle>Add Income</DialogTitle>
+            <DialogTitle>Edit Income</DialogTitle>
             <DialogContent>
                 <Paper elevation={3}
                        sx={{padding: 3, marginTop: 3, width: '100%', marginLeft: 'auto', marginRight: 'auto'}}>
@@ -177,7 +189,7 @@ const AddIncomeDialog: React.FC<IFinancialAddModalProps> = ({open, onClose}) => 
                             </Grid>
                             <Grid item xs={12}>
                                 <Button type="submit" variant="contained" color="primary" fullWidth>
-                                    Create Income
+                                    Edit Income
                                 </Button>
                             </Grid>
                         </Grid>
@@ -189,4 +201,4 @@ const AddIncomeDialog: React.FC<IFinancialAddModalProps> = ({open, onClose}) => 
     );
 };
 
-export default AddIncomeDialog;
+export default EditIncomeDialog;

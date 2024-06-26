@@ -70,6 +70,7 @@ const getEmailFromLocalStorage = () => {
 
 const logoutUser = () => {
     localStorage.removeItem("userInfo");
+    localStorage.removeItem("userPreferredCurrency");
 }
 
 const getUserData = (): IUserTokenDecodedData | null => {

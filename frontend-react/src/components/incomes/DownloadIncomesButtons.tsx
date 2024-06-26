@@ -1,43 +1,42 @@
 import React from 'react';
 import {Button, Tooltip} from '@mui/material';
-import IExpensesData from "../../types/expenses/IExpensesData";
 import {PDFDocument, rgb, StandardFonts} from 'pdf-lib';
+import {IIncomesData} from "../../types/incomes/IIncomesData";
 
 interface DownloadButtonsProps {
-    expenses: IExpensesData[];
+    incomes: IIncomesData[];
     year: number;
     month: number | null;
     currencyCode: string;
     monthlyTotal: number | null;
 }
 
-const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
-                                                                     expenses,
+const DownloadIncomesButtons: React.FC<DownloadButtonsProps> = ({
+                                                                     incomes,
                                                                      year,
                                                                      month,
                                                                      currencyCode,
                                                                      monthlyTotal
                                                                  }) => {
     const downloadCSV = (year: number) => {
-        const headers = ['ID', 'Username', 'Amount', 'Category', 'SubCategory', 'Date', 'Recurring', 'Recurrence Period', 'Currency Code'];
+        const headers = ['ID', 'Username', 'Amount', 'Source', 'Date', 'Recurring', 'Recurrence Period', 'Currency Code'];
         const csvRows = [
             headers.join(','), // header row first
-            ...expenses.map(expense => [
-                expense.id,
-                expense.username,
-                expense.amount,
-                expense.category,
-                expense.subCategory,
-                new Date(expense.date).toLocaleDateString(),
-                expense.recurring ? 'Yes' : 'No',
-                expense.recurrencePeriod,
+            ...incomes.map(income => [
+                income.id,
+                income.username,
+                income.amount,
+                income.source,
+                new Date(income.date).toLocaleDateString(),
+                income.recurring ? 'Yes' : 'No',
+                income.recurrencePeriod,
                 currencyCode
             ].join(','))
         ];
 
         // Calculate monthly totals
         const monthlyTotals = Array(12).fill(0);
-        expenses.forEach(expense => {
+        incomes.forEach(expense => {
             const month = new Date(expense.date).getMonth(); // 0-11
             monthlyTotals[month] += parseFloat(expense.amount.toString());
         });
@@ -56,7 +55,7 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');
         link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `expenses_${year}.csv`);
+        link.setAttribute('download', `incomes_${year}.csv`);
         document.body.appendChild(link); // Required for FF
         link.click();
         document.body.removeChild(link);
@@ -83,7 +82,7 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
         const lineHeight = fontSize + 2;
         const maxWidth = width - 2 * margin;
 
-        page.drawText(`Expenses for ${new Date(0, month! - 1).toLocaleString('default', { month: 'long' })} ${year}`, {
+        page.drawText(`Incomes for ${new Date(0, month! - 1).toLocaleString('default', { month: 'long' })} ${year}`, {
             x: margin,
             y: height - margin,
             size: fontSize * 2,
@@ -93,7 +92,7 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
 
         let yPosition = height - margin - 4 * fontSize;
 
-        expenses.forEach((expense, index) => {
+        incomes.forEach((income, index) => {
             const boxHeight = 8 * lineHeight;
             if (yPosition < margin + boxHeight) {
                 page = pdfDoc.addPage([600, 800]);
@@ -109,17 +108,16 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
                 borderWidth: 1,
             });
 
-            const expenseData = [
-                `Amount: ${expense.amount} ${currencyCode}`,
-                `Category: ${expense.category}`,
-                `SubCategory: ${expense.subCategory}`,
-                `Date: ${new Date(expense.date).toLocaleDateString()}`,
-                `Recurring: ${expense.recurring ? 'Yes' : 'No'}`,
-                `Recurrence Period: ${expense.recurrencePeriod}`,
-                `Description: ${trimTextToWidth(expense.description, maxWidth, timesRomanFont, fontSize)}`
+            const incomeData = [
+                `Amount: ${income.amount} ${currencyCode}`,
+                `Source: ${income.source}`,
+                `Date: ${new Date(income.date).toLocaleDateString()}`,
+                `Recurring: ${income.recurring ? 'Yes' : 'No'}`,
+                `Recurrence Period: ${income.recurrencePeriod}`,
+                `Description: ${trimTextToWidth(income.description, maxWidth, timesRomanFont, fontSize)}`
             ];
 
-            expenseData.forEach((text, idx) => {
+            incomeData.forEach((text, idx) => {
                 page.drawText(text, {
                     x: margin,
                     y: yPosition - lineHeight * (idx + 1),
@@ -145,7 +143,7 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'monthly_expenses.pdf';
+        link.download = 'monthly_incomes.pdf';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -153,7 +151,7 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
 
     return (
         <>
-            <Tooltip title="Download yearly expenses as CSV">
+            <Tooltip title="Download yearly incomes as CSV">
                 <Button
                     variant="contained"
                     color="success"
@@ -164,7 +162,7 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
                 </Button>
             </Tooltip>
             {month !== null && (
-                <Tooltip title="Download monthly expenses as PDF">
+                <Tooltip title="Download monthly incomes as PDF">
                     <Button
                         variant="contained"
                         color="info"
@@ -180,4 +178,4 @@ const DownloadExpensesButtons: React.FC<DownloadButtonsProps> = ({
     );
 };
 
-export default DownloadExpensesButtons;
+export default DownloadIncomesButtons;

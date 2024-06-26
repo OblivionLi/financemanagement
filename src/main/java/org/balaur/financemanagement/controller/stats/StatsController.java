@@ -1,8 +1,7 @@
 package org.balaur.financemanagement.controller.stats;
 
 import lombok.RequiredArgsConstructor;
-import org.balaur.financemanagement.response.stats.MonthlyExpenseSummary;
-import org.balaur.financemanagement.response.stats.YearlyExpenseSummary;
+import org.balaur.financemanagement.response.stats.*;
 import org.balaur.financemanagement.service.StatsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -35,5 +34,35 @@ public class StatsController {
     @GetMapping("/{type}/max-year")
     public ResponseEntity<Integer> getMaxYear(Authentication authentication, @PathVariable String type) {
         return statsService.getMaxYear(authentication, type);
+    }
+
+    @GetMapping("/year/{year}")
+    public ResponseEntity<YearlyFinancialSummary> getStatsByYear(Authentication authentication, @PathVariable int year) {
+        return statsService.getStatsByYear(authentication, year);
+    }
+
+    @GetMapping("/year/{year}/month/{month}")
+    public ResponseEntity<MonthlyFinancialSummary> getStatsByYearAndMonth(Authentication authentication, @PathVariable int year, @PathVariable int month) {
+        return statsService.getStatsByYearAndMonth(authentication, year, month);
+    }
+
+    @GetMapping("/year/{year}/category-breakdown")
+    public ResponseEntity<CategoryBreakdownSummary> getCategoryStatsByYear(Authentication authentication, @PathVariable int year) {
+        return statsService.getCategoryBreakdown(authentication, year);
+    }
+
+    @GetMapping("/year/{year}/month/{month}/comparison")
+    public ResponseEntity<ComparisonSummary> getComparisonData(Authentication authentication, @PathVariable int year, @PathVariable int month) {
+        return statsService.getComparisonData(authentication, year, month);
+    }
+
+    @GetMapping("/year/{year}/savings-rate")
+    public ResponseEntity<SavingsSummary> getSavingsRate(Authentication authentication, @PathVariable int year) {
+        return statsService.getSavingsRateData(authentication, year);
+    }
+
+    @GetMapping("/grand-totals")
+    public ResponseEntity<GrandTotalSummary> getGrandTotals(Authentication authentication) {
+        return statsService.getGrandTotals(authentication);
     }
 }

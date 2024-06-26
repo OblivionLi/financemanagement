@@ -10,8 +10,7 @@ import org.balaur.financemanagement.repository.IncomeStatsRepository;
 import org.balaur.financemanagement.response.expense.ExpenseResponse;
 import org.balaur.financemanagement.response.finances.FinancialResponse;
 import org.balaur.financemanagement.response.income.IncomeResponse;
-import org.balaur.financemanagement.response.stats.MonthlyExpenseSummary;
-import org.balaur.financemanagement.response.stats.YearlyExpenseSummary;
+import org.balaur.financemanagement.response.stats.*;
 import org.balaur.financemanagement.service.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,7 +68,6 @@ public class StatsService {
 
         return ResponseEntity.ok(response);
     }
-
 
     public ResponseEntity<MonthlyExpenseSummary> getStatsByMonthType(Authentication authentication, String type, int year, int month) {
         User user = userService.getUserFromAuthentication(authentication);
@@ -148,6 +147,133 @@ public class StatsService {
         }
     }
 
+    public ResponseEntity<YearlyFinancialSummary> getStatsByYear(Authentication authentication, int year) {
+        User user = userService.getUserFromAuthentication(authentication);
+        List<Expense> expenses;
+        List<Income> incomes;
+
+        try {
+            incomes = incomeStatsRepository.findByYear(year, user.getId());
+            expenses = expenseStatsRepository.findByYear(year, user.getId());
+        } catch (Exception e) {
+            log.error("[StatsService] {} | Error finding incomes/expenses by year and user: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        Map<Integer, BigDecimal> monthlyExpenses = new HashMap<>();
+        Map<Integer, BigDecimal> monthlyIncomes = new HashMap<>();
+        Map<Integer, Long> monthlyExpenseTransactions = new HashMap<>();
+        Map<Integer, Long> monthlyIncomeTransactions = new HashMap<>();
+
+        Integer minYear = null;
+        Integer maxYear = null;
+
+        for (Expense expense : expenses) {
+            int expenseYear = expense.getDate().getYear();
+            if (minYear == null || expenseYear < minYear) minYear = expenseYear;
+            if (maxYear == null || expenseYear > maxYear) maxYear = expenseYear;
+
+            int month = expense.getDate().getMonthValue();
+            monthlyExpenses.put(month, monthlyExpenses.getOrDefault(month, BigDecimal.ZERO).add(expense.getAmount()));
+            monthlyExpenseTransactions.put(month, monthlyExpenseTransactions.getOrDefault(month, 0L) + 1);
+        }
+
+        for (Income income : incomes) {
+            int incomeYear = income.getDate().getYear();
+            if (minYear == null || incomeYear < minYear) minYear = incomeYear;
+            if (maxYear == null || incomeYear > maxYear) maxYear = incomeYear;
+
+            int month = income.getDate().getMonthValue();
+            monthlyIncomes.put(month, monthlyIncomes.getOrDefault(month, BigDecimal.ZERO).add(income.getAmount()));
+            monthlyIncomeTransactions.put(month, monthlyIncomeTransactions.getOrDefault(month, 0L) + 1);
+        }
+
+        YearlyFinancialSummary response = YearlyFinancialSummary.builder()
+                .monthlyExpenses(monthlyExpenses)
+                .monthlyIncomes(monthlyIncomes)
+                .monthlyExpenseTransactions(monthlyExpenseTransactions)
+                .monthlyIncomeTransactions(monthlyIncomeTransactions)
+                .minYear(minYear)
+                .maxYear(maxYear)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<MonthlyFinancialSummary> getStatsByYearAndMonth(Authentication authentication, int year, int month) {
+        User user = userService.getUserFromAuthentication(authentication);
+        List<Expense> expenses;
+        List<Income> incomes;
+
+        try {
+            incomes = incomeStatsRepository.findByYear(year, user.getId());
+            expenses = expenseStatsRepository.findByYear(year, user.getId());
+        } catch (Exception e) {
+            log.error("[StatsService] {} | Error finding incomes/expenses by year and user: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        Map<Integer, BigDecimal> dailyExpenses = new HashMap<>();
+        Map<Integer, BigDecimal> dailyIncomes = new HashMap<>();
+        Map<Integer, Long> dailyExpenseTransactions = new HashMap<>();
+        Map<Integer, Long> dailyIncomeTransactions = new HashMap<>();
+
+        for (Expense expense : expenses) {
+            int day = expense.getDate().getDayOfMonth();
+            dailyExpenses.put(day, dailyExpenses.getOrDefault(day, BigDecimal.ZERO).add(expense.getAmount()));
+            dailyExpenseTransactions.put(day, dailyExpenseTransactions.getOrDefault(day, 0L) + 1);
+        }
+
+        for (Income income : incomes) {
+            int day = income.getDate().getDayOfMonth();
+            dailyIncomes.put(day, dailyIncomes.getOrDefault(day, BigDecimal.ZERO).add(income.getAmount()));
+            dailyIncomeTransactions.put(day, dailyIncomeTransactions.getOrDefault(day, 0L) + 1);
+        }
+
+        MonthlyFinancialSummary response = MonthlyFinancialSummary.builder()
+                .dailyExpenses(dailyExpenses)
+                .dailyIncomes(dailyIncomes)
+                .dailyExpenseTransactions(dailyExpenseTransactions)
+                .dailyIncomeTransactions(dailyIncomeTransactions)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<CategoryBreakdownSummary> getCategoryBreakdown(Authentication authentication, int year) {
+        User user = userService.getUserFromAuthentication(authentication);
+        List<Expense> expenses;
+        List<Income> incomes;
+
+        try {
+            incomes = incomeStatsRepository.findByYear(year, user.getId());
+            expenses = expenseStatsRepository.findByYear(year, user.getId());
+        } catch (Exception e) {
+            log.error("[StatsService] {} | Error finding incomes/expenses by year and user: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        Map<String, BigDecimal> expensesByCategory = new HashMap<>();
+        Map<String, BigDecimal> incomesBySource = new HashMap<>();
+
+        for (Expense expense : expenses) {
+            String category = expense.getSubCategory().getCategory().getDisplayName();
+            expensesByCategory.put(category, expensesByCategory.getOrDefault(category, BigDecimal.ZERO).add(expense.getAmount()));
+        }
+
+        for (Income income : incomes) {
+            String source = income.getSource();
+            incomesBySource.put(source, incomesBySource.getOrDefault(source, BigDecimal.ZERO).add(income.getAmount()));
+        }
+
+        CategoryBreakdownSummary response = CategoryBreakdownSummary.builder()
+                .expensesByCategory(expensesByCategory)
+                .incomesBySource(incomesBySource)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
     private FinancialResponse convertToFinancialResponse(String type, Object record) {
         if (type.equalsIgnoreCase("incomes")) {
             Income income = (Income) record;
@@ -180,4 +306,148 @@ public class StatsService {
         }
     }
 
+    public ResponseEntity<ComparisonSummary> getComparisonData(Authentication authentication, int year, int month) {
+        User user = userService.getUserFromAuthentication(authentication);
+        List<Expense> currentMonthExpenses;
+        List<Income> currentMonthIncomes;
+        List<Expense> previousMonthExpenses;
+        List<Income> previousMonthIncomes;
+        List<Expense> currentYearExpenses;
+        List<Income> currentYearIncomes;
+        List<Expense> previousYearExpenses;
+        List<Income> previousYearIncomes;
+
+        try {
+            currentMonthExpenses = expenseStatsRepository.findByMonth(year, month, user.getId());
+            currentMonthIncomes = incomeStatsRepository.findByMonth(year, month, user.getId());
+
+            previousMonthExpenses = expenseStatsRepository.findByMonth(year, month == 1 ? 12 : month - 1, user.getId());
+            previousMonthIncomes = incomeStatsRepository.findByMonth(year, month == 1 ? 12 : month - 1, user.getId());
+
+            currentYearExpenses = expenseStatsRepository.findByYear(year, user.getId());
+            currentYearIncomes = incomeStatsRepository.findByYear(year, user.getId());
+
+            previousYearExpenses = expenseStatsRepository.findByYear(year - 1, user.getId());
+            previousYearIncomes = incomeStatsRepository.findByYear(year - 1, user.getId());
+        } catch (Exception e) {
+            log.error("[StatsService] {} | Error finding incomes/expenses for comparison data: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        BigDecimal currentMonthExpenseTotal = currentMonthExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal currentMonthIncomeTotal = currentMonthIncomes.stream()
+                .map(Income::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal previousMonthExpenseTotal = previousMonthExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal previousMonthIncomeTotal = previousMonthIncomes.stream()
+                .map(Income::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal currentYearExpenseTotal = currentYearExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal currentYearIncomeTotal = currentYearIncomes.stream()
+                .map(Income::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal previousYearExpenseTotal = previousYearExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal previousYearIncomeTotal = previousYearIncomes.stream()
+                .map(Income::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        ComparisonSummary response = ComparisonSummary.builder()
+                .currentMonthExpenses(currentMonthExpenseTotal)
+                .previousMonthExpenses(previousMonthExpenseTotal)
+                .currentMonthIncomes(currentMonthIncomeTotal)
+                .previousMonthIncomes(previousMonthIncomeTotal)
+                .currentYearExpenses(currentYearExpenseTotal)
+                .previousYearExpenses(previousYearExpenseTotal)
+                .currentYearIncomes(currentYearIncomeTotal)
+                .previousYearIncomes(previousYearIncomeTotal)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<SavingsSummary> getSavingsRateData(Authentication authentication, int year) {
+        User user = userService.getUserFromAuthentication(authentication);
+        List<Expense> expenses;
+        List<Income> incomes;
+
+        try {
+            incomes = incomeStatsRepository.findByYear(year, user.getId());
+            expenses = expenseStatsRepository.findByYear(year, user.getId());
+        } catch (Exception e) {
+            log.error("[StatsService] {} | Error finding incomes/expenses for savings rate data: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        Map<Integer, BigDecimal> monthlySavingsRate = new HashMap<>();
+        Map<Integer, BigDecimal> monthlyIncomeTotals = new HashMap<>();
+        Map<Integer, BigDecimal> monthlyExpenseTotals = new HashMap<>();
+
+        for (Income income : incomes) {
+            int month = income.getDate().getMonthValue();
+            monthlyIncomeTotals.put(month, monthlyIncomeTotals.getOrDefault(month, BigDecimal.ZERO).add(income.getAmount()));
+        }
+
+        for (Expense expense : expenses) {
+            int month = expense.getDate().getMonthValue();
+            monthlyExpenseTotals.put(month, monthlyExpenseTotals.getOrDefault(month, BigDecimal.ZERO).add(expense.getAmount()));
+        }
+
+        for (int month = 1; month <= 12; month++) {
+            BigDecimal income = monthlyIncomeTotals.getOrDefault(month, BigDecimal.ZERO);
+            BigDecimal expense = monthlyExpenseTotals.getOrDefault(month, BigDecimal.ZERO);
+            if (income.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal savingsRate = income.subtract(expense).divide(income, 2, RoundingMode.HALF_UP).multiply(new BigDecimal("100"));
+                monthlySavingsRate.put(month, savingsRate);
+            } else {
+                monthlySavingsRate.put(month, BigDecimal.ZERO);
+            }
+        }
+
+        SavingsSummary response = SavingsSummary.builder()
+                .monthlySavingsRate(monthlySavingsRate)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<GrandTotalSummary> getGrandTotals(Authentication authentication) {
+        User user = userService.getUserFromAuthentication(authentication);
+        List<Expense> expenses;
+        List<Income> incomes;
+
+        try {
+            incomes = incomeStatsRepository.findByUserId(user.getId());
+            expenses = expenseStatsRepository.findByUserId(user.getId());
+        } catch (Exception e) {
+            log.error("[StatsService] {} | Error finding incomes/expenses for grand totals: {}", new Date(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        BigDecimal totalIncomes = incomes.stream().map(Income::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalExpenses = expenses.stream().map(Expense::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal netBalance = totalIncomes.subtract(totalExpenses);
+
+        GrandTotalSummary response = GrandTotalSummary.builder()
+                .totalIncomes(totalIncomes)
+                .totalExpenses(totalExpenses)
+                .netBalance(netBalance)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

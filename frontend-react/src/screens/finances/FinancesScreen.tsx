@@ -10,14 +10,13 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    Paper
+    styled
 } from "@mui/material";
 import ExpensesScreen from "./ExpensesScreen";
 import Toolbar from "@mui/material/Toolbar";
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import RepeatIcon from '@mui/icons-material/Repeat';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
@@ -29,17 +28,28 @@ import IncomesScreen from "./IncomesScreen";
 
 const drawerWidth = 240;
 
+const StyledLink = styled(Link)(({theme}) => ({
+    color: 'inherit',
+    textDecoration: 'none',
+    '&:hover': {
+        textDecoration: 'underline',
+    },
+}));
+
 const FinancesScreen = () => {
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
     const isUserLogged = LocalStorageService.isUserLogged();
 
     useEffect(() => {
         if (!isUserLogged) {
             navigate("/login");
             return;
+        } else {
+            setLoading(false);
         }
-    }, []);
+    }, [navigate, isUserLogged]);
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -47,80 +57,78 @@ const FinancesScreen = () => {
 
     const handleLogout = () => {
         LocalStorageService.logoutUser();
-        navigate("/");
+        navigate("/login");
     }
 
     const drawer = (
         <div>
-            <Toolbar />
-            <Divider />
+            <Toolbar/>
+            <Divider/>
             <List>
                 <ListItem disablePadding>
                     <ListItemButton>
                         <ListItemIcon>
-                            <BarChartIcon />
+                            <BarChartIcon/>
                         </ListItemIcon>
-                        <Link
-                            to={"/"}
-                        >
+                        <StyledLink to={"/"}>
                             Charts
-                        </Link>
+                        </StyledLink>
                     </ListItemButton>
                 </ListItem>
             </List>
-            <Divider />
+            <Divider/>
             <List>
                 <ListItem disablePadding>
                     <ListItemButton>
                         <ListItemIcon>
-                            <ReceiptLongIcon />
+                            <ReceiptLongIcon/>
                         </ListItemIcon>
-                        <Link
-                            to={"/expenses"}
-                        >
+                        <StyledLink to={"/expenses"}>
                             Expenses
-                        </Link>
+                        </StyledLink>
                     </ListItemButton>
                 </ListItem>
             </List>
-            <Divider />
+            <Divider/>
             <List>
                 <ListItem disablePadding>
                     <ListItemButton>
                         <ListItemIcon>
-                            <AttachMoneyIcon />
+                            <AttachMoneyIcon/>
                         </ListItemIcon>
-                        <Link
-                            to={"/incomes"}
-                        >
+                        <StyledLink to={"/incomes"}>
                             Incomes
-                        </Link>
+                        </StyledLink>
                     </ListItemButton>
                 </ListItem>
             </List>
-            <Divider />
+            <Divider/>
             <List>
                 <ListItem disablePadding>
                     <ListItemButton onClick={handleLogout}>
                         <ListItemIcon>
-                            <ExitToAppIcon />
+                            <ExitToAppIcon/>
                         </ListItemIcon>
-                        <ListItemText primary={"Logout"} />
+                        <ListItemText primary={"Logout"}/>
                     </ListItemButton>
                 </ListItem>
             </List>
         </div>
     );
 
+    if (loading) {
+        return null;
+    }
+
     return (
         <>
-            <Box sx={{ display: 'flex' }}>
-                <CssBaseline />
+            <Box sx={{display: 'flex'}}>
+                <CssBaseline/>
                 <AppBar
                     position="fixed"
                     sx={{
-                        width: { sm: `calc(100% - ${drawerWidth}px)` },
-                        ml: { sm: `${drawerWidth}px` },
+                        width: {sm: `calc(100% - ${drawerWidth}px)`},
+                        ml: {sm: `${drawerWidth}px`},
                     }}
                 >
                     <Toolbar>
@@ -129,18 +137,18 @@ const FinancesScreen = () => {
                             aria-label="open drawer"
                             edge="start"
                             onClick={handleDrawerToggle}
-                            sx={{ mr: 2, display: { sm: 'none' } }}
+                            sx={{mr: 2, display: {sm: 'none'}}}
                         >
-                            <MenuIcon />
+                            <MenuIcon/>
                         </IconButton>
                         <Typography variant="h6" noWrap component="div">
-                            Administration Area
+                            Finance Management
                         </Typography>
                     </Toolbar>
                 </AppBar>
                 <Box
                     component="nav"
-                    sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+                    sx={{width: {sm: drawerWidth}, flexShrink: {sm: 0}}}
                     aria-label="mailbox folders"
                 >
                     <Drawer
@@ -152,8 +160,8 @@ const FinancesScreen = () => {
                             keepMounted: true,
                         }}
                         sx={{
-                            display: { xs: 'block', sm: 'none' },
-                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                            display: {xs: 'block', sm: 'none'},
+                            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
                         }}
                     >
                         {drawer}
@@ -161,8 +169,8 @@ const FinancesScreen = () => {
                     <Drawer
                         variant="permanent"
                         sx={{
-                            display: { xs: 'none', sm: 'block' },
-                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                            display: {xs: 'none', sm: 'block'},
+                            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
                         }}
                         open
                     >
@@ -172,13 +180,13 @@ const FinancesScreen = () => {
 
                 <Box
                     component="main"
-                    sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+                    sx={{flexGrow: 1, p: 3, width: {sm: `calc(100% - ${drawerWidth}px)`}}}
                 >
-                    <Toolbar />
+                    <Toolbar/>
                     <Routes>
-                        <Route path="/" element={<ChartsScreen />} />
-                        <Route path="/expenses" element={<ExpensesScreen />} />
-                        <Route path="/incomes" element={<IncomesScreen />} />
+                        <Route path="/" element={<ChartsScreen/>}/>
+                        <Route path="/expenses" element={<ExpensesScreen/>}/>
+                        <Route path="/incomes" element={<IncomesScreen/>}/>
                     </Routes>
                 </Box>
             </Box>

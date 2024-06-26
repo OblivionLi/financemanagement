@@ -46,3 +46,9 @@ The app offers three ways to save and manage your data:
 3. **Charts**: Visualize your data with downloadable chart files.
 
 This application ensures that users can efficiently manage their finances, keep track of recurring payments, and have a clear overview of their financial situation through detailed categorization and data export options.
+
+[Video Presentation of the Project](https://youtu.be/Aeciz3ZQLu8)
+
+## TODOs
+
+1. Add more tests

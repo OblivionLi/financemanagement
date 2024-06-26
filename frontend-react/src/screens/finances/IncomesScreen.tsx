@@ -16,13 +16,14 @@ import MenuItem from "@mui/material/MenuItem";
 import UpdateCurrencyDialog from "../../components/UpdateCurrencyDialog";
 import ExpandedIncomesDetails from "../../components/ExpandedIncomesDetails";
 import AddIncomeDialog from "../../components/incomes/AddIncomeDialog";
+import EditIncomeDialog from "../../components/incomes/EditIncomeDialog";
+import DownloadIncomesButtons from "../../components/incomes/DownloadIncomesButtons";
 
 const IncomesScreen = () => {
     const navigate = useNavigate();
 
     const [incomes, setIncomes] = useState<IIncomesData[]>([]);
     const [loading, setLoading] = useState(true);
-    const isUserLogged = LocalStorageService.isUserLogged();
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
@@ -35,12 +36,15 @@ const IncomesScreen = () => {
     const [maxYear, setMaxYear] = useState<number | null>(null);
     const [yearlyTotal, setYearlyTotal] = useState<number | null>(null);
     const [monthlyTotal, setMonthlyTotal] = useState<number | null>(null);
+    const isUserLogged = LocalStorageService.isUserLogged();
 
     useEffect(() => {
         if (!isUserLogged) {
             navigate("/login");
             return;
         }
+
+        setLoading(false);
 
         fetchIncomes();
         fetchYears();
@@ -61,12 +65,14 @@ const IncomesScreen = () => {
             })
             .catch((e: Error) => {
                 console.log(e);
+                setLoading(false);
             });
     };
 
     const fetchYears = () => {
         let localMinYear: number | null = null;
         let localMaxYear: number | null = null;
+        setLoading(true);
 
         IncomesService.getMinYear()
             .then((response: any) => {
@@ -81,9 +87,11 @@ const IncomesScreen = () => {
                     setYear(localMinYear);
                     fetchIncomesByYear(localMinYear);
                 }
+                setLoading(false);
             })
             .catch((e: Error) => {
                 console.log(e);
+                setLoading(false);
             });
     };
 
@@ -92,17 +100,13 @@ const IncomesScreen = () => {
             return;
         }
 
-        setLoading(true);
-
         IncomesService.getIncomesByYear(year)
             .then((response: any) => {
                 setIncomes(response.data.records);
                 setYearlyTotal(response.data.yearlyTotal);
-                setLoading(false);
             })
             .catch((e: Error) => {
                 console.log(e);
-                setLoading(false);
             });
     };
 
@@ -289,6 +293,10 @@ const IncomesScreen = () => {
         income.source.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    if (loading) {
+        return null;
+    }
+
     return (
         <>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -327,7 +335,18 @@ const IncomesScreen = () => {
                 </Button>
             </Box>
 
-            <Box display="flex" flexDirection="column" justifyContent="flex-end" alignItems="flex-start" mb={2} gap={2}
+            <Box display="flex" justifyContent="flex-start" alignItems="center" mb={2}>
+                <DownloadIncomesButtons
+                    incomes={incomes}
+                    year={year}
+                    month={month}
+                    currencyCode={currencyCode}
+                    monthlyTotal={monthlyTotal}
+                />
+            </Box>
+
+            <Box display="flex" flexDirection="column" justifyContent="flex-end" alignItems="flex-start" mb={2}
+                 gap={2}
                  flexWrap="wrap">
                 <Box display="flex" flexDirection="row" flexWrap="wrap" alignItems="center" gap={2}>
                     <TextField
@@ -355,7 +374,8 @@ const IncomesScreen = () => {
                             >
                                 {minYear && maxYear && [...Array(maxYear - minYear + 1)].map((_, i) => {
                                     const currentYear = minYear + i;
-                                    return <MenuItem key={currentYear} value={currentYear}>{currentYear}</MenuItem>;
+                                    return <MenuItem key={currentYear}
+                                                     value={currentYear}>{currentYear}</MenuItem>;
                                 })}
                             </Select>
                         </FormControl>
@@ -415,7 +435,7 @@ const IncomesScreen = () => {
 
                             <Typography variant="button" display="block" gutterBottom>
                                 Yearly Total for {year}:
-                                <Typography component="span" sx={{ color: yearlyTotal ? "green" : "error.main" }}>
+                                <Typography component="span" sx={{color: yearlyTotal ? "green" : "error.main"}}>
                                     {yearlyTotal ? ` ${yearlyTotal.toString()} ${currencyCode}` : ' No incomes for this year'}
                                 </Typography>
                             </Typography>
@@ -423,8 +443,10 @@ const IncomesScreen = () => {
                             {month !== null && (
                                 <>
                                     <Typography variant="button" display="block" gutterBottom>
-                                        Monthly Total for {new Date(0, month - 1).toLocaleString('default', { month: 'long' })} {year}:
-                                        <Typography component="span" sx={{ color: monthlyTotal ? "green" : "error.main" }}>
+                                        Monthly Total
+                                        for {new Date(0, month - 1).toLocaleString('default', {month: 'long'})} {year}:
+                                        <Typography component="span"
+                                                    sx={{color: monthlyTotal ? "green" : "error.main"}}>
                                             {monthlyTotal ? ` ${monthlyTotal.toString()} ${currencyCode}` : 'No incomes for this month'}
                                         </Typography>
                                     </Typography>
@@ -444,19 +466,18 @@ const IncomesScreen = () => {
                         </Paper>
 
                     </>
-                )
-            }
+                )}
 
             <AddIncomeDialog
                 open={addDialogOpen}
                 onClose={handleAddDialogClose}
             />
 
-            {/*<EditIncomeDialog*/}
-            {/*    open={editDialogOpen}*/}
-            {/*    onClose={handleEditDialogClose}*/}
-            {/*    rowData={selectedIncome}*/}
-            {/*/>*/}
+            <EditIncomeDialog
+                open={editDialogOpen}
+                onClose={handleEditDialogClose}
+                rowData={selectedIncome}
+            />
 
             <UpdateCurrencyDialog
                 open={updateDialogOpen}

@@ -19,4 +19,7 @@ public interface IncomeStatsRepository extends JpaRepository<Income, Long> {
 
     @Query("SELECT MAX(YEAR(i.date)) FROM Income i WHERE i.user.id = :userId")
     Integer findMaxYear(@Param("userId") Long userId);
+
+    @Query("SELECT i FROM Income i WHERE i.user.id = :userId")
+    List<Income> findByUserId(@Param("userId") Long id);
 }

@@ -19,4 +19,7 @@ public interface ExpenseStatsRepository extends JpaRepository<Expense, Long> {
 
     @Query("SELECT MAX(YEAR(e.date)) FROM Expense e WHERE e.user.id = :userId")
     Integer findMaxYear(@Param("userId") Long userId);
+
+    @Query("SELECT e FROM Expense e WHERE e.user.id = :userId")
+    List<Expense> findByUserId(@Param("userId") Long id);
 }
