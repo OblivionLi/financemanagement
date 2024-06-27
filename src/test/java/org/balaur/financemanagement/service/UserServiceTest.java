@@ -25,6 +25,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 
 @DataJpaTest
+@ActiveProfiles("test")
 public class UserServiceTest {
     @InjectMocks
     private UserService userService;

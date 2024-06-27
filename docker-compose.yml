@@ -30,13 +30,15 @@ services:
       retries: 3
 
   backend:
-    image: dockerfile-backend
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
     ports:
       - "8080:8080"
     depends_on:
       - database
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/financemanagement
+      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/financemanagement
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
     command: ["sh", "-c", "./wait-for-it.sh database:3306 -- java -jar app.jar"]
@@ -47,6 +49,15 @@ services:
       retries: 3
     volumes:
       - backend-data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend-react
+      dockerfile: Dockerfile-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 volumes:
   mysql-data:
   backend-data:
