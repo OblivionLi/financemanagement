@@ -49,6 +49,13 @@ This application ensures that users can efficiently manage their finances, keep 
 
 [Video Presentation of the Project](https://youtu.be/Aeciz3ZQLu8)
 
+## Setup
+
+1. Replace the placeholder/default application/-test.properties envs with your values
+2. Don't forget to also replace the envs in docker-compose.yml
+3. For 1. and 2. maybe I will add a centralized .env or you can do it yourself
+
 ## TODOs
 
 1. Add more tests
+2. Maybe add a centralized .env ??
