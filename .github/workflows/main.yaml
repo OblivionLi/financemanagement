@@ -27,29 +27,29 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build
 
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results
-          path: build/reports/tests/test
-
-      - name: Set environment variables
-        run: |
-          echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" >> $GITHUB_ENV
-          echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> $GITHUB_ENV
-          echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> $GITHUB_ENV
-          echo "SECURITY_JWT_TOKEN_SECRET_KEY=${{ secrets.SECURITY_JWT_TOKEN_SECRET_KEY }}" >> $GITHUB_ENV
-          echo "SPRING_MAIL_HOST=${{ secrets.SPRING_MAIL_HOST }}" >> $GITHUB_ENV
-          echo "SPRING_MAIL_PORT=${{ secrets.SPRING_MAIL_PORT }}" >> $GITHUB_ENV
-          echo "SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}" >> $GITHUB_ENV
-          echo "SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}" >> $GITHUB_ENV
-          echo "SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH }}" >> $GITHUB_ENV
-          echo "SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE }}" >> $GITHUB_ENV
-          echo "SPRING_MAIL_PROPERTIES_MAIL_DEBUG=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_DEBUG }}" >> $GITHUB_ENV
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+#      - name: Upload test results
+#        if: failure()
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: test-results
+#          path: build/reports/tests/test
+#
+#      - name: Set environment variables
+#        run: |
+#          echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" >> $GITHUB_ENV
+#          echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> $GITHUB_ENV
+#          echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> $GITHUB_ENV
+#          echo "SECURITY_JWT_TOKEN_SECRET_KEY=${{ secrets.SECURITY_JWT_TOKEN_SECRET_KEY }}" >> $GITHUB_ENV
+#          echo "SPRING_MAIL_HOST=${{ secrets.SPRING_MAIL_HOST }}" >> $GITHUB_ENV
+#          echo "SPRING_MAIL_PORT=${{ secrets.SPRING_MAIL_PORT }}" >> $GITHUB_ENV
+#          echo "SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}" >> $GITHUB_ENV
+#          echo "SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}" >> $GITHUB_ENV
+#          echo "SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH }}" >> $GITHUB_ENV
+#          echo "SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE }}" >> $GITHUB_ENV
+#          echo "SPRING_MAIL_PROPERTIES_MAIL_DEBUG=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_DEBUG }}" >> $GITHUB_ENV
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v1
 
       - name: Build backend Docker image
         run: docker build -t backend -f Dockerfile-backend .
