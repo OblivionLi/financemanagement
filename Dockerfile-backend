@@ -22,7 +22,25 @@ RUN ./gradlew --no-daemon build
 # RUN ./gradlew --no-daemon build --info
 
 COPY build/libs/*.jar app.jar
-COPY src/main/resources/application.properties src/main/resources/application.properties
+#COPY src/main/resources/application.properties src/main/resources/application.properties
+# Create application.properties from environment variables
+RUN echo "spring.datasource.url=${SPRING_DATASOURCE_URL}" > src/main/resources/application.properties \
+ && echo "spring.datasource.username=${SPRING_DATASOURCE_USERNAME}" >> src/main/resources/application.properties \
+ && echo "spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}" >> src/main/resources/application.properties \
+ && echo "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver" >> src/main/resources/application.properties \
+ && echo "spring.jpa.show-sql=true" >> src/main/resources/application.properties \
+ && echo "spring.jpa.hibernate.ddl-auto=update" >> src/main/resources/application.properties \
+ && echo "spring.jpa.open-in-view=false" >> src/main/resources/application.properties \
+ && echo "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect" >> src/main/resources/application.properties \
+ && echo "security.jwt.token.secret-key=${SECURITY_JWT_TOKEN_SECRET_KEY}" >> src/main/resources/application.properties \
+ && echo "spring.mail.host=${SPRING_MAIL_HOST}" >> src/main/resources/application.properties \
+ && echo "spring.mail.port=${SPRING_MAIL_PORT}" >> src/main/resources/application.properties \
+ && echo "spring.mail.username=${SPRING_MAIL_USERNAME}" >> src/main/resources/application.properties \
+ && echo "spring.mail.password=${SPRING_MAIL_PASSWORD}" >> src/main/resources/application.properties \
+ && echo "spring.mail.properties.mail.smtp.auth=${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}" >> src/main/resources/application.properties \
+ && echo "spring.mail.properties.mail.smtp.starttls.enable=${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE}" >> src/main/resources/application.properties \
+ && echo "spring.mail.properties.mail.debug=${SPRING_MAIL_PROPERTIES_MAIL_DEBUG}" >> src/main/resources/application.properties
+
 COPY src/main/resources/application-test.properties src/main/resources/application-test.properties
 
 EXPOSE 8080
